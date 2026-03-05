@@ -2,285 +2,326 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { players, managerComments, type Player } from "@/lib/playerData";
+import { players, MANAGERS, getVestuarioComments, type Player } from "@/lib/playerData";
 
-const MANAGERS = [
-  { id: "mourinho", name: "Mourinho", avatar: "🕶️", style: "text-blue-300" },
-  { id: "klopp", name: "Klopp", avatar: "😄", style: "text-red-300" },
-  { id: "guardiola", name: "Guardiola", avatar: "🧠", style: "text-sky-300" },
-  { id: "fergie", name: "Sir Alex", avatar: "🪄", style: "text-amber-300" },
-];
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
-const POSITION_COLOR: Record<string, string> = {
-  GK: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  DEF: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  MID: "bg-green-500/20 text-green-400 border-green-500/30",
-  FWD: "bg-red-500/20 text-red-400 border-red-500/30",
+const POSITION_LABEL: Record<string, string> = {
+  GK: "ARQUERO",
+  DEF: "DEFENSOR",
+  MID: "MEDIOCAMPISTA",
+  FWD: "DELANTERO",
 };
 
-function StatRow({ label, value }: { label: string; value: number }) {
+const STAT_LABELS: Array<{ key: keyof Player; label: string }> = [
+  { key: "pace", label: "VEL" },
+  { key: "shooting", label: "DEF" },
+  { key: "passing", label: "PAS" },
+  { key: "dribbling", label: "DRI" },
+  { key: "defending", label: "MAR" },
+  { key: "physical", label: "FIS" },
+];
+
+const MANAGER_COLORS: Record<string, string> = {
+  bilardo: "border-l-blue-500",
+  ruggeri: "border-l-amber-500",
+  scaloni: "border-l-sky-400",
+};
+
+const MANAGER_TAG_COLORS: Record<string, string> = {
+  bilardo: "text-blue-400 bg-blue-400/10",
+  ruggeri: "text-amber-400 bg-amber-400/10",
+  scaloni: "text-sky-400 bg-sky-400/10",
+};
+
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────────
+
+function FlagImg({ code, className = "" }: { code: string; className?: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] text-slate-500 w-6 uppercase">{label}</span>
-      <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${value}%` }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className={`h-full rounded-full ${
-            value >= 90 ? "bg-sca-accent" : value >= 75 ? "bg-green-400" : value >= 60 ? "bg-yellow-400" : "bg-slate-500"
-          }`}
-        />
-      </div>
-      <span className={`text-xs font-black w-7 text-right ${
-        value >= 90 ? "text-sca-accent" : value >= 75 ? "text-green-400" : "text-slate-400"
-      }`}>{value}</span>
+    <img
+      src={`https://flagcdn.com/w40/${code}.png`}
+      alt={code}
+      className={`object-cover ${className}`}
+      loading="lazy"
+    />
+  );
+}
+
+function StatBar({ value }: { value: number }) {
+  return (
+    <div className="h-[3px] w-full bg-slate-800 rounded-sm overflow-hidden mt-1">
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${value}%` }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="h-full bg-slate-400 rounded-sm"
+      />
     </div>
   );
 }
 
-function FifaCard({ player, onClick }: { player: Player; onClick: () => void }) {
-  const overallColor =
-    player.overall >= 97 ? "from-yellow-300 to-amber-400" :
-    player.overall >= 93 ? "from-slate-300 to-slate-400" :
-    "from-amber-700 to-amber-800";
+function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }) {
+  const [imgError, setImgError] = useState(false);
 
   return (
     <motion.button
-      whileHover={{ scale: 1.04, y: -2 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.015 }}
+      whileTap={{ scale: 0.985 }}
       onClick={onClick}
-      className="relative w-full text-left"
+      className="w-full text-left rounded-sm border border-slate-700/60 bg-[#0d1117] hover:border-slate-500/60 transition-colors overflow-hidden"
     >
-      <div className={`relative rounded-xl overflow-hidden border border-slate-700/60 bg-gradient-to-b from-sca-surface to-slate-900 p-3`}>
-        {/* Era badge */}
-        <div className="absolute top-2 right-2">
-          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-            player.era === "current"
-              ? "bg-sca-accent/20 text-sca-accent border border-sca-accent/30"
-              : "bg-sca-gold/20 text-sca-gold border border-sca-gold/30"
-          }`}>
-            {player.era === "current" ? "ACTUAL" : "HISTÓRICO"}
-          </span>
+      {/* Top accent line */}
+      <div className="h-[2px] w-full bg-slate-700" />
+
+      <div className="flex gap-0">
+        {/* Photo column */}
+        <div className="w-20 flex-shrink-0 bg-slate-900/60 flex items-center justify-center overflow-hidden">
+          {!imgError ? (
+            <img
+              src={player.imageUrl}
+              alt={player.name}
+              className="w-full h-full object-cover object-top"
+              style={{ minHeight: "96px", maxHeight: "96px" }}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-24 flex items-center justify-center">
+              <span className="text-slate-600 text-xs font-mono">{player.number}</span>
+            </div>
+          )}
         </div>
 
-        {/* Top: overall + position */}
-        <div className="flex items-start gap-3">
-          <div className="flex flex-col items-center">
-            <div className={`text-2xl font-black bg-gradient-to-b ${overallColor} bg-clip-text text-transparent`}>
-              {player.overall}
+        {/* Data column */}
+        <div className="flex-1 p-3 min-w-0">
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="min-w-0">
+              <div className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mb-0.5">
+                {POSITION_LABEL[player.position]}
+              </div>
+              <div className="font-black text-white text-sm leading-tight tracking-wide">
+                {player.name}
+              </div>
             </div>
-            <span className={`text-[9px] font-black px-1 py-0.5 rounded border ${POSITION_COLOR[player.position]}`}>
-              {player.position}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <FlagImg code={player.flagCode} className="w-6 h-4 rounded-[2px]" />
+              <span className="text-2xl font-black text-slate-300 leading-none tabular-nums">
+                {player.overall}
+              </span>
+            </div>
+          </div>
+
+          {/* Stats row — 3 stats compact */}
+          <div className="grid grid-cols-3 gap-x-3">
+            {STAT_LABELS.slice(0, 3).map(({ key, label }) => (
+              <div key={label}>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[9px] text-slate-600 font-mono">{label}</span>
+                  <span className="text-[10px] font-bold text-slate-300 tabular-nums">
+                    {player[key] as number}
+                  </span>
+                </div>
+                <StatBar value={player[key] as number} />
+              </div>
+            ))}
+          </div>
+
+          {/* Footer row */}
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[9px] text-slate-600 font-mono">
+              {player.era === "current" ? "ACTIVO" : `HISTÓRICO · ${player.birthYear}`}
+            </span>
+            <span className="text-[9px] text-slate-500 font-mono">
+              MF: {player.wc_partidos}PJ · {player.wc_goles}G
             </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="text-lg">{player.flag}</span>
-            </div>
-            <div className="font-black text-white text-sm leading-tight">{player.shortName}</div>
-            <div className="text-[10px] text-slate-500 truncate">{player.name}</div>
-          </div>
-          <div className="text-3xl">{player.emoji}</div>
         </div>
-
-        {/* Stats mini */}
-        <div className="mt-3 grid grid-cols-3 gap-1 text-center">
-          {[
-            { label: "PAC", value: player.pace },
-            { label: "SHO", value: player.shooting },
-            { label: "DRI", value: player.dribbling },
-          ].map((s) => (
-            <div key={s.label}>
-              <div className={`text-sm font-black ${s.value >= 90 ? "text-sca-accent" : "text-white"}`}>{s.value}</div>
-              <div className="text-[9px] text-slate-600">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* WC goals */}
-        {player.worldCupGoals > 0 && (
-          <div className="mt-2 text-[10px] text-slate-500 flex gap-2">
-            <span>⚽ {player.worldCupGoals} goles MF</span>
-            {player.worldCupTitles > 0 && <span>🏆 {player.worldCupTitles}x</span>}
-          </div>
-        )}
-
-        {/* Trait */}
-        <div className="mt-2 text-[10px] font-bold text-sca-gold/70 italic">"{player.trait}"</div>
       </div>
     </motion.button>
   );
 }
 
-function ManagerBubble({
-  managerId,
-  comment,
-  index,
-}: {
-  managerId: string;
-  comment: string;
-  index: number;
-}) {
-  const manager = MANAGERS.find((m) => m.id === managerId)!;
-  const isEven = index % 2 === 0;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: isEven ? -20 : 20, y: 10 }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ delay: index * 0.15, duration: 0.4, ease: "easeOut" }}
-      className={`flex items-start gap-2 ${isEven ? "flex-row" : "flex-row-reverse"}`}
-    >
-      {/* Avatar */}
-      <div className="flex-shrink-0 flex flex-col items-center gap-1">
-        <div className={`w-9 h-9 rounded-full bg-slate-800 border-2 ${
-          managerId === "mourinho" ? "border-blue-500/50" :
-          managerId === "klopp" ? "border-red-500/50" :
-          managerId === "guardiola" ? "border-sky-500/50" :
-          "border-amber-500/50"
-        } flex items-center justify-center text-lg`}>
-          {manager.avatar}
-        </div>
-        <span className={`text-[9px] font-bold ${manager.style}`}>{manager.name}</span>
-      </div>
-
-      {/* Bubble */}
-      <div className={`relative max-w-[78%] rounded-2xl px-3.5 py-2.5 ${
-        isEven
-          ? "rounded-tl-sm bg-slate-800/80 border border-slate-700/60"
-          : "rounded-tr-sm bg-slate-700/50 border border-slate-600/40"
-      }`}>
-        {/* Tail */}
-        <div className={`absolute top-2 ${isEven ? "-left-1.5" : "-right-1.5"} w-3 h-3 ${
-          isEven ? "bg-slate-800/80" : "bg-slate-700/50"
-        } rotate-45 ${isEven ? "border-l border-b border-slate-700/60" : "border-r border-t border-slate-600/40"}`} />
-
-        <p className="text-xs text-slate-200 leading-relaxed italic">"{comment}"</p>
-
-        {/* Decorative accent line */}
-        <div className={`mt-1.5 h-0.5 w-8 rounded-full ${
-          managerId === "mourinho" ? "bg-blue-500/40" :
-          managerId === "klopp" ? "bg-red-500/40" :
-          managerId === "guardiola" ? "bg-sky-500/40" :
-          "bg-amber-500/40"
-        } ${isEven ? "mr-auto" : "ml-auto"}`} />
-      </div>
-    </motion.div>
-  );
-}
-
 function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }) {
-  const comments = managerComments;
-  const overallColor =
-    player.overall >= 97 ? "from-yellow-300 to-amber-400" :
-    player.overall >= 93 ? "from-slate-300 to-slate-400" :
-    "from-amber-700 to-amber-800";
-
-  // Build comment list: one per manager
-  const commentList = MANAGERS.map((m, i) => {
-    const managerCommentSet = comments[m.id];
-    const playerComments = managerCommentSet?.[player.id] || managerCommentSet?.default || [];
-    const comment = playerComments[i % playerComments.length] || playerComments[0] || "Sin comentarios.";
-    return { managerId: m.id, comment };
-  });
+  const [imgError, setImgError] = useState(false);
+  const comments = getVestuarioComments(player.id);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
+      exit={{ opacity: 0, y: -12 }}
       className="space-y-4"
     >
       <button
         onClick={onBack}
-        className="text-sm text-slate-500 hover:text-white flex items-center gap-1 transition-colors"
+        className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-wider uppercase transition-colors"
       >
         ← Volver al Vestuario
       </button>
 
-      {/* FIFA Card full */}
-      <div className={`rounded-2xl overflow-hidden border border-slate-700/60 bg-gradient-to-b from-sca-surface via-slate-900 to-sca-dark p-5`}>
-        <div className="flex items-start gap-4">
-          {/* Left: rating */}
-          <div className="flex flex-col items-center gap-1">
-            <div className={`text-5xl font-black bg-gradient-to-b ${overallColor} bg-clip-text text-transparent`}>
-              {player.overall}
-            </div>
-            <span className={`text-xs font-black px-2 py-0.5 rounded border ${POSITION_COLOR[player.position]}`}>
-              {player.position}
-            </span>
-            <span className="text-2xl mt-1">{player.flag}</span>
-          </div>
+      {/* ── FICHA PRINCIPAL ──────────────────────────────────────── */}
+      <div className="rounded-sm border border-slate-700/60 bg-[#0d1117] overflow-hidden">
+        {/* Header bar */}
+        <div className="bg-slate-900 border-b border-slate-700/60 px-4 py-2 flex items-center justify-between">
+          <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+            FICHA DE INTELIGENCIA DEPORTIVA
+          </span>
+          <span className="text-[9px] font-mono text-slate-600">
+            REF-{player.id.toUpperCase().slice(0, 6)}
+          </span>
+        </div>
 
-          {/* Right: name + info */}
-          <div className="flex-1">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-3xl font-black text-white leading-none">{player.shortName}</div>
-                <div className="text-sm text-slate-400 mt-0.5">{player.name}</div>
-                <div className="text-xs text-slate-500">{player.country} · #{player.number}</div>
+        <div className="flex gap-0">
+          {/* Photo */}
+          <div className="w-36 flex-shrink-0 bg-slate-900/40 overflow-hidden flex items-start justify-center">
+            {!imgError ? (
+              <img
+                src={player.imageUrl}
+                alt={player.name}
+                className="w-full object-cover object-top"
+                style={{ minHeight: "200px", maxHeight: "200px" }}
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <div className="w-full h-48 flex items-center justify-center">
+                <span className="text-slate-700 font-mono text-4xl font-black">
+                  {player.number}
+                </span>
               </div>
-              <div className="text-5xl">{player.emoji}</div>
+            )}
+          </div>
+
+          {/* Data */}
+          <div className="flex-1 p-4 space-y-4">
+            {/* Name block */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <FlagImg code={player.flagCode} className="w-7 h-[18px] rounded-[2px]" />
+                <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+                  {player.country} · #{player.number}
+                </span>
+              </div>
+              <div className="text-2xl font-black text-white tracking-wider leading-none">
+                {player.name}
+              </div>
+              <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
+                {player.fullName}
+              </div>
             </div>
-            <div className="mt-2 flex gap-2 flex-wrap">
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                player.era === "current"
-                  ? "bg-sca-accent/20 text-sca-accent border border-sca-accent/30"
-                  : "bg-sca-gold/20 text-sca-gold border border-sca-gold/30"
-              }`}>
-                {player.era === "current" ? "ACTUAL" : "HISTÓRICO"}
-              </span>
-              <span className="text-[10px] text-slate-500 font-bold italic">"{player.trait}"</span>
+
+            {/* Overall + position */}
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="text-5xl font-black text-white leading-none tabular-nums">
+                  {player.overall}
+                </div>
+                <div className="text-[9px] text-slate-600 font-mono mt-0.5">ÍNDICE GLOBAL</div>
+              </div>
+              <div className="h-10 w-px bg-slate-800" />
+              <div>
+                <div className="text-sm font-black text-slate-300 tracking-wide">
+                  {POSITION_LABEL[player.position]}
+                </div>
+                <div className="text-[9px] text-slate-600 font-mono">
+                  {player.era === "current" ? "ACTIVO" : `HISTÓRICO · n. ${player.birthYear}`}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mt-5 space-y-2">
-          <StatRow label="PAC" value={player.pace} />
-          <StatRow label="SHO" value={player.shooting} />
-          <StatRow label="PAS" value={player.passing} />
-          <StatRow label="DRI" value={player.dribbling} />
-          <StatRow label="DEF" value={player.defending} />
-          <StatRow label="FIS" value={player.physical} />
+        {/* Stats grid */}
+        <div className="border-t border-slate-700/60 px-4 py-4">
+          <div className="text-[9px] font-mono text-slate-600 tracking-widest mb-3 uppercase">
+            Indicadores de Rendimiento
+          </div>
+          <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+            {STAT_LABELS.map(({ key, label }) => (
+              <div key={label}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10px] font-mono text-slate-500 tracking-wider">{label}</span>
+                  <span className="text-lg font-black text-white tabular-nums leading-none">
+                    {player[key] as number}
+                  </span>
+                </div>
+                <StatBar value={player[key] as number} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* WC stats */}
-        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-3 gap-3 text-center">
-          <div>
-            <div className="text-lg font-black text-sca-accent">{player.worldCupGoals}</div>
-            <div className="text-[10px] text-slate-500">Goles MF</div>
+        {/* World Cup record */}
+        <div className="border-t border-slate-700/60 px-4 py-3 bg-slate-900/30">
+          <div className="text-[9px] font-mono text-slate-600 tracking-widest mb-2 uppercase">
+            Historial Copa del Mundo
           </div>
-          <div>
-            <div className="text-lg font-black text-white">{player.worldCupApps}</div>
-            <div className="text-[10px] text-slate-500">Partidos MF</div>
-          </div>
-          <div>
-            <div className="text-lg font-black text-sca-gold">{player.worldCupTitles}</div>
-            <div className="text-[10px] text-slate-500">Títulos</div>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { label: "PARTICIPACIONES", value: player.wc_participaciones },
+              { label: "PARTIDOS JUGADOS", value: player.wc_partidos },
+              { label: "GOLES", value: player.wc_goles },
+              { label: "TÍTULOS", value: player.wc_titulos },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-lg font-black text-white tabular-nums leading-none">
+                  {s.value}
+                </div>
+                <div className="text-[8px] font-mono text-slate-600 mt-0.5 leading-tight">
+                  {s.label}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Manager debate */}
-      <div className="rounded-xl border border-slate-700/50 bg-sca-surface/40 p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
-            🎙️ Charla Técnica
+      {/* ── ANÁLISIS TÉCNICO ─────────────────────────────────────── */}
+      <div className="rounded-sm border border-slate-700/60 bg-[#0d1117] overflow-hidden">
+        <div className="bg-slate-900 border-b border-slate-700/60 px-4 py-2">
+          <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+            Análisis Técnico · Panel de DTs
           </span>
-          <div className="h-px flex-1 bg-slate-800" />
         </div>
-        <div className="space-y-4">
-          {commentList.map((c, i) => (
-            <ManagerBubble key={c.managerId} managerId={c.managerId} comment={c.comment} index={i} />
-          ))}
+
+        <div className="divide-y divide-slate-800/60">
+          {comments.map(({ managerId, comment }, i) => {
+            const manager = MANAGERS.find((m) => m.id === managerId)!;
+            const isRight = i % 2 !== 0;
+
+            return (
+              <motion.div
+                key={managerId}
+                initial={{ opacity: 0, x: isRight ? 16 : -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.12, duration: 0.35 }}
+                className={`px-4 py-4 border-l-2 ${MANAGER_COLORS[managerId]}`}
+              >
+                {/* Manager header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-[9px] font-black font-mono tracking-widest px-2 py-0.5 rounded-[2px] ${MANAGER_TAG_COLORS[managerId]}`}>
+                    {manager.name}
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-600">{manager.role}</span>
+                </div>
+
+                {/* Comment bubble */}
+                <div className="relative bg-slate-900/60 border border-slate-700/40 rounded-sm px-3 py-2.5">
+                  <p className="text-[12px] text-slate-300 leading-relaxed font-sans">
+                    "{comment}"
+                  </p>
+                  {/* Left notch */}
+                  <div className="absolute left-3 -top-[5px] w-2 h-2 bg-slate-900/60 border-l border-t border-slate-700/40 rotate-45" />
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </motion.div>
   );
 }
+
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
 
 export default function Vestuario() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -297,7 +338,11 @@ export default function Vestuario() {
     <div className="space-y-4">
       <AnimatePresence mode="wait">
         {selectedPlayer ? (
-          <PlayerDetail key="detail" player={selectedPlayer} onBack={() => setSelectedPlayer(null)} />
+          <PlayerDetail
+            key="detail"
+            player={selectedPlayer}
+            onBack={() => setSelectedPlayer(null)}
+          />
         ) : (
           <motion.div
             key="grid"
@@ -307,61 +352,72 @@ export default function Vestuario() {
             className="space-y-4"
           >
             {/* Header */}
-            <div>
-              <h2 className="text-xl font-black text-white">Vestuario</h2>
-              <p className="text-xs text-slate-500 mt-1">Seleccioná un jugador y escuchá a los DTs</p>
+            <div className="border-b border-slate-800 pb-3">
+              <div className="text-[9px] font-mono text-slate-600 tracking-widest uppercase mb-1">
+                Sistema de Información Deportiva
+              </div>
+              <h2 className="text-xl font-black text-white tracking-wider">VESTUARIO</h2>
+              <p className="text-[11px] font-mono text-slate-500 mt-0.5">
+                Fichas técnicas · Figuras históricas y actuales
+              </p>
             </div>
 
             {/* Filters */}
             <div className="space-y-2">
-              <div className="flex gap-2">
+              {/* Era filter */}
+              <div className="flex gap-1.5">
                 {(["all", "current", "historic"] as const).map((e) => (
                   <button
                     key={e}
                     onClick={() => setEra(e)}
-                    className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition-colors ${
+                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase transition-colors border rounded-[2px] ${
                       era === e
-                        ? e === "current"
-                          ? "bg-sca-accent/20 text-sca-accent border border-sca-accent/40"
-                          : e === "historic"
-                          ? "bg-sca-gold/20 text-sca-gold border border-sca-gold/40"
-                          : "bg-slate-700 text-white border border-slate-600"
-                        : "border border-slate-800 text-slate-500 hover:text-white"
+                        ? "bg-slate-700 text-white border-slate-500"
+                        : "border-slate-800 text-slate-600 hover:text-slate-400"
                     }`}
                   >
-                    {e === "all" ? "Todos" : e === "current" ? "Actuales" : "Históricos"}
+                    {e === "all" ? "TODOS" : e === "current" ? "ACTIVOS" : "HISTÓRICOS"}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+
+              {/* Position filter */}
+              <div className="flex gap-1.5">
                 {(["all", "GK", "DEF", "MID", "FWD"] as const).map((pos) => (
                   <button
                     key={pos}
                     onClick={() => setPosition(pos)}
-                    className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition-colors border ${
+                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase transition-colors border rounded-[2px] ${
                       position === pos
-                        ? pos === "all"
-                          ? "bg-slate-700 text-white border-slate-600"
-                          : `${POSITION_COLOR[pos]} bg-opacity-20`
-                        : "border-slate-800 text-slate-500 hover:text-white"
+                        ? "bg-slate-700 text-white border-slate-500"
+                        : "border-slate-800 text-slate-600 hover:text-slate-400"
                     }`}
                   >
-                    {pos === "all" ? "Todos" : pos}
+                    {pos === "all" ? "POS" : pos}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Count */}
+            <div className="text-[9px] font-mono text-slate-600 tracking-widest uppercase">
+              {filtered.length} FICHAS ENCONTRADAS
+            </div>
+
+            {/* List */}
+            <div className="space-y-2">
               {filtered.map((player) => (
-                <FifaCard key={player.id} player={player} onClick={() => setSelectedPlayer(player)} />
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  onClick={() => setSelectedPlayer(player)}
+                />
               ))}
             </div>
 
             {filtered.length === 0 && (
-              <div className="text-center py-12 text-slate-600 text-sm">
-                No hay jugadores con esos filtros
+              <div className="py-12 text-center text-[11px] font-mono text-slate-700 uppercase tracking-widest">
+                Sin resultados para los filtros seleccionados
               </div>
             )}
           </motion.div>
