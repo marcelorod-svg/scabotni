@@ -3,22 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --sca-dark: #0a0e17;
-  --sca-surface: #12182a;
-  --sca-accent: #00d4aa;
-  --sca-gold: #f5b942;
-  --sca-danger: #ff4757;
-  --sca-muted: #64748b;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
 }
 
+/* Base body font */
 body {
-  background: linear-gradient(180deg, var(--sca-dark) 0%, var(--sca-surface) 100%);
-  min-height: 100vh;
-  color: #e2e8f0;
+  font-family: var(--font-body);
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Headings and display elements use condensed */
+h1, h2, h3, h4, h5, h6,
+.font-display {
+  font-family: var(--font-display);
 }
