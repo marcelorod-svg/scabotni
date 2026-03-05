@@ -10,6 +10,9 @@ import ShareableCard from "@/components/ShareableCard";
 import PragmaPlate from "@/components/PragmaPlate";
 import ThinkingLoader from "@/components/ThinkingLoader";
 import EgoCheckModal from "@/components/EgoCheckModal";
+import BottomNav, { type TabId } from "@/components/BottomNav";
+import CentralDeDatos from "@/components/CentralDeDatos";
+import Vestuario from "@/components/Vestuario";
 import { mockMatches } from "@/lib/mockData";
 import { getManagerPrediction } from "@/lib/managers";
 import type { Match, Manager, UserPrediction } from "@/lib/types";
@@ -17,6 +20,7 @@ import type { Match, Manager, UserPrediction } from "@/lib/types";
 type FlowStep = "list" | "managers" | "thinking" | "prediction" | "contradict" | "done";
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<TabId>("predictions");
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
   const [prediction, setPrediction] = useState<ReturnType<
@@ -120,145 +124,180 @@ export default function Home() {
     : undefined;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20">
       <header className="border-b border-slate-800 bg-sca-dark/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-white tracking-tight">
             Sca<span className="text-sca-accent">BOT</span>ni
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Football predictions with theatrical AI managers
+            {activeTab === "predictions" && "Football predictions with theatrical AI managers"}
+            {activeTab === "central" && "Historia del Mundial · 1930 — 2022"}
+            {activeTab === "vestuario" && "Las figuras del fútbol mundial"}
           </p>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        {step === "list" && (
-          <>
-            <MatchList
-              matches={mockMatches}
-              onSelectMatch={handleSelectMatch}
-            />
-          </>
-        )}
-
-        {step === "managers" && selectedMatch && (
-          <div className="space-y-6">
-            <button
-              onClick={handleBackToList}
-              className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
-            >
-              ← Back to matches
-            </button>
-            <div className="rounded-xl border border-slate-700/60 bg-slate-800/30 p-4">
-              <div className="font-semibold text-white">
-                {selectedMatch.homeTeam} vs {selectedMatch.awayTeam}
-              </div>
-              <div className="text-xs text-slate-500">{selectedMatch.league}</div>
-            </div>
-            <ManagerGrid
-              onSelectManager={handleSelectManager}
-              selectedManagerId={selectedManager?.id}
-            />
-          </div>
-        )}
-
-        {step === "thinking" && selectedManager && (
-          <div className="space-y-6">
-            <button
-              onClick={handleBackToManagers}
-              className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
-            >
-              ← Pick another manager
-            </button>
-            <AnimatePresence mode="wait">
-              <ThinkingLoader managerId={selectedManager.id} />
-            </AnimatePresence>
-          </div>
-        )}
-
-        {step === "prediction" &&
-          selectedMatch &&
-          selectedManager &&
-          prediction && (
+        <AnimatePresence mode="wait">
+          {activeTab === "predictions" && (
             <motion.div
-              key="prediction"
+              key="predictions"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="space-y-6"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
             >
-              <button
-                onClick={handleBackToManagers}
-                className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
-              >
-                ← Pick another manager
-              </button>
-              <ManagerPrediction
-                match={selectedMatch}
-                prediction={prediction}
-                onFollow={handleFollow}
-                onContradict={handleContradict}
-                showUserInput={!userPred}
-              />
+              {step === "list" && (
+                <MatchList matches={mockMatches} onSelectMatch={handleSelectMatch} />
+              )}
+
+              {step === "managers" && selectedMatch && (
+                <div className="space-y-6">
+                  <button
+                    onClick={handleBackToList}
+                    className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
+                  >
+                    ← Back to matches
+                  </button>
+                  <div className="rounded-xl border border-slate-700/60 bg-slate-800/30 p-4">
+                    <div className="font-semibold text-white">
+                      {selectedMatch.homeTeam} vs {selectedMatch.awayTeam}
+                    </div>
+                    <div className="text-xs text-slate-500">{selectedMatch.league}</div>
+                  </div>
+                  <ManagerGrid
+                    onSelectManager={handleSelectManager}
+                    selectedManagerId={selectedManager?.id}
+                  />
+                </div>
+              )}
+
+              {step === "thinking" && selectedManager && (
+                <div className="space-y-6">
+                  <button
+                    onClick={handleBackToManagers}
+                    className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
+                  >
+                    ← Pick another manager
+                  </button>
+                  <AnimatePresence mode="wait">
+                    <ThinkingLoader managerId={selectedManager.id} />
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {step === "prediction" &&
+                selectedMatch &&
+                selectedManager &&
+                prediction && (
+                  <motion.div
+                    key="prediction"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="space-y-6"
+                  >
+                    <button
+                      onClick={handleBackToManagers}
+                      className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
+                    >
+                      ← Pick another manager
+                    </button>
+                    <ManagerPrediction
+                      match={selectedMatch}
+                      prediction={prediction}
+                      onFollow={handleFollow}
+                      onContradict={handleContradict}
+                      showUserInput={!userPred}
+                    />
+                  </motion.div>
+                )}
+
+              {step === "contradict" && selectedMatch && selectedManager && (
+                <div className="space-y-6">
+                  <button
+                    onClick={() => setStep("prediction")}
+                    className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
+                  >
+                    ← Back
+                  </button>
+                  <UserScoreInput
+                    match={selectedMatch}
+                    onSave={handleSaveContradict}
+                    onCancel={() => setStep("prediction")}
+                  />
+                </div>
+              )}
+
+              {step === "done" &&
+                selectedMatch &&
+                selectedManager &&
+                prediction &&
+                userPred && (
+                  <div className="space-y-6">
+                    <ManagerPrediction
+                      match={selectedMatch}
+                      prediction={prediction}
+                      onFollow={handleFollow}
+                      onContradict={handleContradict}
+                      userPrediction={{
+                        homeScore: userPred.homeScore,
+                        awayScore: userPred.awayScore,
+                        followed: userPred.followedManager,
+                      }}
+                      showUserInput={false}
+                    />
+                    <ShareableCard
+                      match={selectedMatch}
+                      manager={selectedManager}
+                      prediction={prediction}
+                      userPrediction={{
+                        homeScore: userPred.homeScore,
+                        awayScore: userPred.awayScore,
+                        followed: userPred.followedManager,
+                      }}
+                    />
+                    <button
+                      onClick={handleBackToList}
+                      className="w-full py-3 rounded-xl font-bold border border-sca-accent text-sca-accent hover:bg-sca-accent/10 transition-colors"
+                    >
+                      Predict another match
+                    </button>
+                  </div>
+                )}
+
+              <PragmaPlate />
             </motion.div>
           )}
 
-        {step === "contradict" && selectedMatch && selectedManager && (
-          <div className="space-y-6">
-            <button
-              onClick={() => setStep("prediction")}
-              className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
+          {activeTab === "central" && (
+            <motion.div
+              key="central"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
             >
-              ← Back
-            </button>
-            <UserScoreInput
-              match={selectedMatch}
-              onSave={handleSaveContradict}
-              onCancel={() => setStep("prediction")}
-            />
-          </div>
-        )}
-
-        {step === "done" &&
-          selectedMatch &&
-          selectedManager &&
-          prediction &&
-          userPred && (
-            <div className="space-y-6">
-              <ManagerPrediction
-                match={selectedMatch}
-                prediction={prediction}
-                onFollow={handleFollow}
-                onContradict={handleContradict}
-                userPrediction={{
-                  homeScore: userPred.homeScore,
-                  awayScore: userPred.awayScore,
-                  followed: userPred.followedManager,
-                }}
-                showUserInput={false}
-              />
-              <ShareableCard
-                match={selectedMatch}
-                manager={selectedManager}
-                prediction={prediction}
-                userPrediction={{
-                  homeScore: userPred.homeScore,
-                  awayScore: userPred.awayScore,
-                  followed: userPred.followedManager,
-                }}
-              />
-              <button
-                onClick={handleBackToList}
-                className="w-full py-3 rounded-xl font-bold border border-sca-accent text-sca-accent hover:bg-sca-accent/10 transition-colors"
-              >
-                Predict another match
-              </button>
-            </div>
+              <CentralDeDatos />
+            </motion.div>
           )}
 
-        <PragmaPlate />
+          {activeTab === "vestuario" && (
+            <motion.div
+              key="vestuario"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              <Vestuario />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {selectedManager && (
         <EgoCheckModal
