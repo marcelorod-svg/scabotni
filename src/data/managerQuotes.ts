@@ -6,11 +6,13 @@ export const quotesDB = {
       'Si jugamos contra el seleccionado de la cárcel, ganamos.',
       'Yo no festejo los goles, los analizo.',
       'No busquen dinero, busquen gloria.',
-      'A Thompson lo dejé solo porque era de madera.',
+      '¿Qué me importa si el partido es más feo o más lindo? ¿A quién le importa? Lo que quiero es ganar',
       'Muchachos, en la valija pongan una foto de la familia y una de la Copa.',
       'El fútbol profesional es ganar y nada más.',
       'A mí me gusta el bidón, pero el bidón con agua, eh.',
       'Si el 5 se proyecta, el 2 tiene que estar comiéndole la oreja al 9.'
+      'El fútbol es lo más fácil que hay'
+      'El partido perfecto es un cero a cero sin ocasiones de gol, nadie se ha equivocado'
       // (Podés sumar más de tu archivo personal aquí)
     ],
     generated: [
@@ -28,6 +30,11 @@ export const quotesDB = {
       'Ponete la camiseta y sentí que sos el dueño de la calle.',
       'A Maradona no lo tocaba nadie, lo cuidábamos entre todos.',
       'Si perdés la marca en un córner, no podés volver al vestuario.'
+      'La Copa del Mundo es la más linda de todas, es incomparable con cualquier otra.'
+      'Argentina-Brasil es el clásico más grande del mundo, no sólo de Sudamérica'
+      'Ver llorar a los brasileños en la tribuna fue de las satisfacciones más grandes que tuve en mi vida'
+      'Con lo que le está costando a Argentina ganar la Copa del Mundo, teniendo un gran 10 como lo teníamos nosotros, tomamos mayor dimensión del logro que alcanzamos en 1986. Ojalá pase otra vez'
+      'Si perdiste, bien no jugaste. Ganar es lo más importante'
     ],
     generated: [
       'Este pibe tira bicicletas en TikTok, pero en una final lo quiero ver cuando lo cruce un central de 1.90.',
@@ -37,4 +44,5 @@ export const quotesDB = {
       '¿Mundial en tres países? Mientras haya una pelota y una camiseta argentina, hay que ganar.'
     ]
   }
+
 };
