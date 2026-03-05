@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   players,
@@ -10,6 +10,7 @@ import {
   type Player,
   type ManagerDef,
 } from "@/lib/playerData";
+import PlayerImage from "@/components/PlayerImage";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -28,34 +29,6 @@ const STAT_LABELS: Array<{ key: keyof Player; label: string }> = [
   { key: "defending", label: "MAR" },
   { key: "physical",  label: "FIS" },
 ];
-
-// Wikipedia thumbnail URL builder
-function wikiThumbUrl(title: string, width = 300): string {
-  return `https://en.wikipedia.org/w/index.php?action=render&title=Special:FilePath/${encodeURIComponent(title)}&width=${width}`;
-}
-
-// Better: use the Wikipedia REST API thumbnail
-function wikiImageUrl(wikiTitle: string): string {
-  return `https://en.wikipedia.org/w/index.php?title=Special:Export/${encodeURIComponent(wikiTitle)}`;
-}
-
-// Most reliable approach: use Wikimedia Commons direct CDN path pattern
-// We'll use the /wiki/Special:Redirect/page/ endpoint which redirects to the article image
-const PLAYER_IMAGES: Record<string, string> = {
-  pele:          "https://upload.wikimedia.org/wikipedia/commons/2/25/Pel%C3%A9_1970_%28cropped%29.jpg",
-  maradona:      "https://upload.wikimedia.org/wikipedia/commons/7/75/Maradona_%26_Bochini_-_Argentina_1980.jpg",
-  ronaldo_r9:    "https://upload.wikimedia.org/wikipedia/commons/3/31/Ronaldo_-_Foto_oficial_%282%29.jpg",
-  zidane:        "https://upload.wikimedia.org/wikipedia/commons/f/f3/Zinedine_Zidane_2012_%28cropped%29.jpg",
-  messi:         "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg",
-  beckenbauer:   "https://upload.wikimedia.org/wikipedia/commons/0/02/Bundesarchiv_B_145_Bild-F049274-0042%2C_Franz_Beckenbauer_%28cropped%29.jpg",
-  cruyff:        "https://upload.wikimedia.org/wikipedia/commons/c/c3/Johan_Cruyff_%281974%29_%28cropped%29.jpg",
-  ronaldo_cr7:   "https://upload.wikimedia.org/wikipedia/commons/8/8c/Cristiano_Ronaldo_2018.jpg",
-  mbappe:        "https://upload.wikimedia.org/wikipedia/commons/5/57/2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_F.C._by_Sandro_Halank%E2%80%93143_%28cropped%29.jpg",
-  vinicius:      "https://upload.wikimedia.org/wikipedia/commons/9/9b/Vin%C3%ADcius_J%C3%BAnior_-_2022_FIFA_World_Cup_%28cropped%29.jpg",
-  bellingham:    "https://upload.wikimedia.org/wikipedia/commons/7/77/Jude_Bellingham_2022_%28cropped%29.jpg",
-  modric:        "https://upload.wikimedia.org/wikipedia/commons/5/57/Luka_Modri%C4%87_%2C_FIFA_World_Cup_2022_%28cropped%29.jpg",
-  haaland:       "https://upload.wikimedia.org/wikipedia/commons/8/89/Erling_Haaland_%282023%29.jpg",
-};
 
 // ─── TYPEWRITER HOOK ──────────────────────────────────────────────────────────
 
@@ -167,39 +140,6 @@ function TypewriterBubble({
         </div>
       </div>
     </motion.div>
-  );
-}
-
-function PlayerImage({ playerId, name }: { playerId: string; name: string }) {
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
-  const src = PLAYER_IMAGES[playerId];
-
-  return (
-    <div className="w-full h-full bg-slate-900/60 overflow-hidden flex items-start justify-center relative">
-      {status === "loading" && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4 h-4 border border-slate-700 border-t-slate-400 rounded-full animate-spin" />
-        </div>
-      )}
-      {src && (
-        <img
-          src={src}
-          alt={name}
-          className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
-            status === "ok" ? "opacity-100" : "opacity-0"
-          }`}
-          onLoad={() => setStatus("ok")}
-          onError={() => setStatus("error")}
-          referrerPolicy="no-referrer"
-          crossOrigin="anonymous"
-        />
-      )}
-      {(status === "error" || !src) && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-slate-700 font-mono font-black text-3xl">?</span>
-        </div>
-      )}
-    </div>
   );
 }
 
