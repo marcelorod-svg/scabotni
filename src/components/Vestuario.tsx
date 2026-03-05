@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { players, MANAGERS, getVestuarioComments, type Player } from "@/lib/playerData";
+import {
+  players,
+  ALL_MANAGERS,
+  pickRandomManagers,
+  getComment,
+  type Player,
+  type ManagerDef,
+} from "@/lib/playerData";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -14,27 +21,70 @@ const POSITION_LABEL: Record<string, string> = {
 };
 
 const STAT_LABELS: Array<{ key: keyof Player; label: string }> = [
-  { key: "pace", label: "VEL" },
-  { key: "shooting", label: "DEF" },
-  { key: "passing", label: "PAS" },
+  { key: "pace",      label: "VEL" },
+  { key: "shooting",  label: "TIR" },
+  { key: "passing",   label: "PAS" },
   { key: "dribbling", label: "DRI" },
   { key: "defending", label: "MAR" },
-  { key: "physical", label: "FIS" },
+  { key: "physical",  label: "FIS" },
 ];
 
-const MANAGER_COLORS: Record<string, string> = {
-  bilardo: "border-l-blue-500",
-  ruggeri: "border-l-amber-500",
-  scaloni: "border-l-sky-400",
+// Wikipedia thumbnail URL builder
+function wikiThumbUrl(title: string, width = 300): string {
+  return `https://en.wikipedia.org/w/index.php?action=render&title=Special:FilePath/${encodeURIComponent(title)}&width=${width}`;
+}
+
+// Better: use the Wikipedia REST API thumbnail
+function wikiImageUrl(wikiTitle: string): string {
+  return `https://en.wikipedia.org/w/index.php?title=Special:Export/${encodeURIComponent(wikiTitle)}`;
+}
+
+// Most reliable approach: use Wikimedia Commons direct CDN path pattern
+// We'll use the /wiki/Special:Redirect/page/ endpoint which redirects to the article image
+const PLAYER_IMAGES: Record<string, string> = {
+  pele:          "https://upload.wikimedia.org/wikipedia/commons/2/25/Pel%C3%A9_1970_%28cropped%29.jpg",
+  maradona:      "https://upload.wikimedia.org/wikipedia/commons/7/75/Maradona_%26_Bochini_-_Argentina_1980.jpg",
+  ronaldo_r9:    "https://upload.wikimedia.org/wikipedia/commons/3/31/Ronaldo_-_Foto_oficial_%282%29.jpg",
+  zidane:        "https://upload.wikimedia.org/wikipedia/commons/f/f3/Zinedine_Zidane_2012_%28cropped%29.jpg",
+  messi:         "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg",
+  beckenbauer:   "https://upload.wikimedia.org/wikipedia/commons/0/02/Bundesarchiv_B_145_Bild-F049274-0042%2C_Franz_Beckenbauer_%28cropped%29.jpg",
+  cruyff:        "https://upload.wikimedia.org/wikipedia/commons/c/c3/Johan_Cruyff_%281974%29_%28cropped%29.jpg",
+  ronaldo_cr7:   "https://upload.wikimedia.org/wikipedia/commons/8/8c/Cristiano_Ronaldo_2018.jpg",
+  mbappe:        "https://upload.wikimedia.org/wikipedia/commons/5/57/2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_F.C._by_Sandro_Halank%E2%80%93143_%28cropped%29.jpg",
+  vinicius:      "https://upload.wikimedia.org/wikipedia/commons/9/9b/Vin%C3%ADcius_J%C3%BAnior_-_2022_FIFA_World_Cup_%28cropped%29.jpg",
+  bellingham:    "https://upload.wikimedia.org/wikipedia/commons/7/77/Jude_Bellingham_2022_%28cropped%29.jpg",
+  modric:        "https://upload.wikimedia.org/wikipedia/commons/5/57/Luka_Modri%C4%87_%2C_FIFA_World_Cup_2022_%28cropped%29.jpg",
+  haaland:       "https://upload.wikimedia.org/wikipedia/commons/8/89/Erling_Haaland_%282023%29.jpg",
 };
 
-const MANAGER_TAG_COLORS: Record<string, string> = {
-  bilardo: "text-blue-400 bg-blue-400/10",
-  ruggeri: "text-amber-400 bg-amber-400/10",
-  scaloni: "text-sky-400 bg-sky-400/10",
-};
+// ─── TYPEWRITER HOOK ──────────────────────────────────────────────────────────
 
-// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────────
+function useTypewriter(text: string, speed = 22, startDelay = 0) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed("");
+    setDone(false);
+    let i = 0;
+    const start = setTimeout(() => {
+      const interval = setInterval(() => {
+        i++;
+        setDisplayed(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(interval);
+          setDone(true);
+        }
+      }, speed);
+      return () => clearInterval(interval);
+    }, startDelay);
+    return () => clearTimeout(start);
+  }, [text, speed, startDelay]);
+
+  return { displayed, done };
+}
+
+// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
 function FlagImg({ code, className = "" }: { code: string; className?: string }) {
   return (
@@ -53,71 +103,148 @@ function StatBar({ value }: { value: number }) {
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="h-full bg-slate-400 rounded-sm"
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="h-full bg-slate-500 rounded-sm"
       />
     </div>
   );
 }
 
-function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }) {
-  const [imgError, setImgError] = useState(false);
+function ManagerAvatar({ manager }: { manager: ManagerDef }) {
+  return (
+    <div className={`w-8 h-8 rounded-sm border ${manager.accentColor} bg-slate-900 flex items-center justify-center flex-shrink-0`}>
+      <span className="text-[9px] font-black font-mono text-slate-300 tracking-wider">
+        {manager.initials}
+      </span>
+    </div>
+  );
+}
+
+function TypewriterBubble({
+  manager,
+  comment,
+  delay,
+  isRight,
+}: {
+  manager: ManagerDef;
+  comment: string;
+  delay: number;
+  isRight: boolean;
+}) {
+  const { displayed, done } = useTypewriter(comment, 18, delay);
 
   return (
-    <motion.button
-      whileHover={{ scale: 1.015 }}
-      whileTap={{ scale: 0.985 }}
-      onClick={onClick}
-      className="w-full text-left rounded-sm border border-slate-700/60 bg-[#0d1117] hover:border-slate-500/60 transition-colors overflow-hidden"
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: delay / 1000, duration: 0.3 }}
+      className={`flex items-start gap-2.5 ${isRight ? "flex-row-reverse" : "flex-row"}`}
     >
-      {/* Top accent line */}
-      <div className="h-[2px] w-full bg-slate-700" />
+      <ManagerAvatar manager={manager} />
 
-      <div className="flex gap-0">
-        {/* Photo column */}
-        <div className="w-20 flex-shrink-0 bg-slate-900/60 flex items-center justify-center overflow-hidden">
-          {!imgError ? (
-            <img
-              src={player.imageUrl}
-              alt={player.name}
-              className="w-full h-full object-cover object-top"
-              style={{ minHeight: "96px", maxHeight: "96px" }}
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="w-full h-24 flex items-center justify-center">
-              <span className="text-slate-600 text-xs font-mono">{player.number}</span>
-            </div>
-          )}
+      <div className="flex-1 min-w-0 space-y-1">
+        {/* Name + role */}
+        <div className={`flex items-center gap-2 ${isRight ? "flex-row-reverse" : ""}`}>
+          <span className={`text-[9px] font-black font-mono tracking-widest px-1.5 py-0.5 rounded-[2px] ${manager.tagColor}`}>
+            {manager.name}
+          </span>
+          <span className="text-[9px] font-mono text-slate-600 truncate">{manager.role}</span>
         </div>
 
-        {/* Data column */}
+        {/* Bubble */}
+        <div className={`relative border border-slate-700/50 bg-slate-900/70 rounded-sm px-3 py-2.5 border-l-2 ${manager.accentColor}`}>
+          <p className="text-[12px] text-slate-300 leading-relaxed font-sans">
+            "{displayed}
+            {!done && (
+              <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity }}
+                className="inline-block w-[2px] h-3 bg-slate-400 ml-0.5 align-middle"
+              />
+            )}
+            {done && '"'}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function PlayerImage({ playerId, name }: { playerId: string; name: string }) {
+  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const src = PLAYER_IMAGES[playerId];
+
+  return (
+    <div className="w-full h-full bg-slate-900/60 overflow-hidden flex items-start justify-center relative">
+      {status === "loading" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4 h-4 border border-slate-700 border-t-slate-400 rounded-full animate-spin" />
+        </div>
+      )}
+      {src && (
+        <img
+          src={src}
+          alt={name}
+          className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+            status === "ok" ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setStatus("ok")}
+          onError={() => setStatus("error")}
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
+        />
+      )}
+      {(status === "error" || !src) && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-slate-700 font-mono font-black text-3xl">?</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PLAYER CARD (list view) ──────────────────────────────────────────────────
+
+function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.012 }}
+      whileTap={{ scale: 0.988 }}
+      onClick={onClick}
+      className="w-full text-left rounded-sm border border-slate-700/50 bg-[#0d1117] hover:border-slate-500/50 transition-colors overflow-hidden"
+    >
+      <div className="h-[2px] w-full bg-slate-800" />
+      <div className="flex">
+        {/* Photo */}
+        <div className="w-20 flex-shrink-0" style={{ height: 88 }}>
+          <PlayerImage playerId={player.id} name={player.name} />
+        </div>
+
+        {/* Data */}
         <div className="flex-1 p-3 min-w-0">
-          {/* Header row */}
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0">
-              <div className="text-[10px] text-slate-500 font-mono tracking-widest uppercase mb-0.5">
+              <div className="text-[9px] text-slate-600 font-mono tracking-widest uppercase mb-0.5">
                 {POSITION_LABEL[player.position]}
               </div>
-              <div className="font-black text-white text-sm leading-tight tracking-wide">
+              <div className="font-black text-white text-sm leading-tight tracking-wide truncate">
                 {player.name}
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <FlagImg code={player.flagCode} className="w-6 h-4 rounded-[2px]" />
-              <span className="text-2xl font-black text-slate-300 leading-none tabular-nums">
+              <FlagImg code={player.flagCode} className="w-6 h-[15px] rounded-[2px]" />
+              <span className="text-xl font-black text-slate-200 leading-none tabular-nums">
                 {player.overall}
               </span>
             </div>
           </div>
 
-          {/* Stats row — 3 stats compact */}
-          <div className="grid grid-cols-3 gap-x-3">
+          <div className="grid grid-cols-3 gap-x-2.5">
             {STAT_LABELS.slice(0, 3).map(({ key, label }) => (
               <div key={label}>
                 <div className="flex justify-between items-baseline">
                   <span className="text-[9px] text-slate-600 font-mono">{label}</span>
-                  <span className="text-[10px] font-bold text-slate-300 tabular-nums">
+                  <span className="text-[10px] font-bold text-slate-400 tabular-nums">
                     {player[key] as number}
                   </span>
                 </div>
@@ -126,13 +253,12 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
             ))}
           </div>
 
-          {/* Footer row */}
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-[9px] text-slate-600 font-mono">
-              {player.era === "current" ? "ACTIVO" : `HISTÓRICO · ${player.birthYear}`}
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="text-[9px] text-slate-700 font-mono">
+              {player.era === "current" ? "ACTIVO" : `HISTÓRICO`}
             </span>
-            <span className="text-[9px] text-slate-500 font-mono">
-              MF: {player.wc_partidos}PJ · {player.wc_goles}G
+            <span className="text-[9px] text-slate-600 font-mono">
+              MF {player.wc_partidos}PJ · {player.wc_goles}G
             </span>
           </div>
         </div>
@@ -141,9 +267,38 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
   );
 }
 
+// ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
+
+function DebatePanel({ playerId, refreshKey }: { playerId: string; refreshKey: number }) {
+  const [panel, setPanel] = useState<Array<{ manager: ManagerDef; comment: string }>>([]);
+
+  useEffect(() => {
+    const managers = pickRandomManagers(Math.floor(Math.random() * 2) + 2); // 2 or 3
+    setPanel(
+      managers.map((m, i) => ({
+        manager: m,
+        comment: getComment(m.id, playerId, i),
+      }))
+    );
+  }, [playerId, refreshKey]);
+
+  return (
+    <div className="space-y-4">
+      {panel.map(({ manager, comment }, i) => (
+        <TypewriterBubble
+          key={`${manager.id}-${refreshKey}`}
+          manager={manager}
+          comment={comment}
+          delay={i * 900}
+          isRight={i % 2 !== 0}
+        />
+      ))}
+    </div>
+  );
+}
+
 function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }) {
-  const [imgError, setImgError] = useState(false);
-  const comments = getVestuarioComments(player.id);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <motion.div
@@ -154,92 +309,78 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
     >
       <button
         onClick={onBack}
-        className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-wider uppercase transition-colors"
+        className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
       >
-        ← Volver al Vestuario
+        ← VOLVER AL VESTUARIO
       </button>
 
-      {/* ── FICHA PRINCIPAL ──────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-700/60 bg-[#0d1117] overflow-hidden">
+      {/* ── FICHA PRINCIPAL ──────────────────────────────── */}
+      <div className="rounded-sm border border-slate-700/50 bg-[#0d1117] overflow-hidden">
         {/* Header bar */}
-        <div className="bg-slate-900 border-b border-slate-700/60 px-4 py-2 flex items-center justify-between">
-          <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+          <span className="text-[9px] font-mono text-slate-600 tracking-widest uppercase">
             FICHA DE INTELIGENCIA DEPORTIVA
           </span>
-          <span className="text-[9px] font-mono text-slate-600">
-            REF-{player.id.toUpperCase().slice(0, 6)}
+          <span className="text-[9px] font-mono text-slate-700">
+            REF-{player.id.toUpperCase().slice(0, 8)}
           </span>
         </div>
 
-        <div className="flex gap-0">
+        <div className="flex">
           {/* Photo */}
-          <div className="w-36 flex-shrink-0 bg-slate-900/40 overflow-hidden flex items-start justify-center">
-            {!imgError ? (
-              <img
-                src={player.imageUrl}
-                alt={player.name}
-                className="w-full object-cover object-top"
-                style={{ minHeight: "200px", maxHeight: "200px" }}
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <div className="w-full h-48 flex items-center justify-center">
-                <span className="text-slate-700 font-mono text-4xl font-black">
-                  {player.number}
-                </span>
-              </div>
-            )}
+          <div className="w-36 flex-shrink-0" style={{ height: 200 }}>
+            <PlayerImage playerId={player.id} name={player.name} />
           </div>
 
-          {/* Data */}
-          <div className="flex-1 p-4 space-y-4">
-            {/* Name block */}
+          {/* Identity block */}
+          <div className="flex-1 p-4 space-y-3 min-w-0">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <FlagImg code={player.flagCode} className="w-7 h-[18px] rounded-[2px]" />
-                <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+                <FlagImg code={player.flagCode} className="w-7 h-[17px] rounded-[2px]" />
+                <span className="text-[9px] font-mono text-slate-600 tracking-widest uppercase truncate">
                   {player.country} · #{player.number}
                 </span>
               </div>
               <div className="text-2xl font-black text-white tracking-wider leading-none">
                 {player.name}
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
+              <div className="text-[10px] text-slate-600 mt-0.5 font-mono truncate">
                 {player.fullName}
               </div>
             </div>
 
-            {/* Overall + position */}
             <div className="flex items-center gap-3">
               <div>
-                <div className="text-5xl font-black text-white leading-none tabular-nums">
+                <div className="text-4xl font-black text-white leading-none tabular-nums">
                   {player.overall}
                 </div>
-                <div className="text-[9px] text-slate-600 font-mono mt-0.5">ÍNDICE GLOBAL</div>
+                <div className="text-[8px] text-slate-700 font-mono mt-0.5 uppercase tracking-widest">
+                  ÍNDICE GLOBAL
+                </div>
               </div>
-              <div className="h-10 w-px bg-slate-800" />
+              <div className="w-px h-8 bg-slate-800" />
               <div>
-                <div className="text-sm font-black text-slate-300 tracking-wide">
+                <div className="text-xs font-black text-slate-300 tracking-wider uppercase">
                   {POSITION_LABEL[player.position]}
                 </div>
                 <div className="text-[9px] text-slate-600 font-mono">
-                  {player.era === "current" ? "ACTIVO" : `HISTÓRICO · n. ${player.birthYear}`}
+                  {player.era === "current" ? "ACTIVO" : `HISTÓRICO · ${player.birthYear}`}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats grid */}
-        <div className="border-t border-slate-700/60 px-4 py-4">
-          <div className="text-[9px] font-mono text-slate-600 tracking-widest mb-3 uppercase">
+        {/* Stats */}
+        <div className="border-t border-slate-800 px-4 py-4">
+          <div className="text-[9px] font-mono text-slate-700 tracking-widest mb-3 uppercase">
             Indicadores de Rendimiento
           </div>
-          <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+          <div className="grid grid-cols-3 gap-x-5 gap-y-3">
             {STAT_LABELS.map(({ key, label }) => (
               <div key={label}>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[10px] font-mono text-slate-500 tracking-wider">{label}</span>
+                  <span className="text-[10px] font-mono text-slate-600 tracking-wider">{label}</span>
                   <span className="text-lg font-black text-white tabular-nums leading-none">
                     {player[key] as number}
                   </span>
@@ -251,22 +392,22 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
 
         {/* World Cup record */}
-        <div className="border-t border-slate-700/60 px-4 py-3 bg-slate-900/30">
-          <div className="text-[9px] font-mono text-slate-600 tracking-widest mb-2 uppercase">
+        <div className="border-t border-slate-800 px-4 py-3 bg-slate-900/20">
+          <div className="text-[9px] font-mono text-slate-700 tracking-widest mb-2 uppercase">
             Historial Copa del Mundo
           </div>
           <div className="grid grid-cols-4 gap-2">
             {[
-              { label: "PARTICIPACIONES", value: player.wc_participaciones },
-              { label: "PARTIDOS JUGADOS", value: player.wc_partidos },
+              { label: "PART.", value: player.wc_participaciones },
+              { label: "PJ", value: player.wc_partidos },
               { label: "GOLES", value: player.wc_goles },
               { label: "TÍTULOS", value: player.wc_titulos },
             ].map((s) => (
               <div key={s.label} className="text-center">
-                <div className="text-lg font-black text-white tabular-nums leading-none">
+                <div className="text-base font-black text-white tabular-nums leading-none">
                   {s.value}
                 </div>
-                <div className="text-[8px] font-mono text-slate-600 mt-0.5 leading-tight">
+                <div className="text-[8px] font-mono text-slate-700 mt-0.5 leading-tight uppercase">
                   {s.label}
                 </div>
               </div>
@@ -275,53 +416,51 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
       </div>
 
-      {/* ── ANÁLISIS TÉCNICO ─────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-700/60 bg-[#0d1117] overflow-hidden">
-        <div className="bg-slate-900 border-b border-slate-700/60 px-4 py-2">
-          <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
-            Análisis Técnico · Panel de DTs
+      {/* ── PANEL DE DEBATE ──────────────────────────────── */}
+      <div className="rounded-sm border border-slate-700/50 bg-[#0d1117] overflow-hidden">
+        {/* Header */}
+        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+          <span className="text-[9px] font-mono text-slate-600 tracking-widest uppercase">
+            Panel de Análisis Técnico
           </span>
+          <button
+            onClick={() => setRefreshKey((k) => k + 1)}
+            className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 hover:text-sca-accent transition-colors border border-slate-800 hover:border-sca-accent/40 px-2 py-1 rounded-[2px]"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
+              <path d="M13.7 2.3A7 7 0 1 0 15 8" strokeLinecap="round" />
+              <path d="M11 2h3V5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            NUEVO DEBATE
+          </button>
         </div>
 
-        <div className="divide-y divide-slate-800/60">
-          {comments.map(({ managerId, comment }, i) => {
-            const manager = MANAGERS.find((m) => m.id === managerId)!;
-            const isRight = i % 2 !== 0;
+        <div className="px-4 py-4">
+          {/* Pool indicator */}
+          <div className="flex items-center gap-1.5 mb-4">
+            <span className="text-[9px] font-mono text-slate-700 uppercase tracking-widest">
+              TÉCNICOS DISPONIBLES:
+            </span>
+            <div className="flex gap-1 flex-wrap">
+              {ALL_MANAGERS.map((m) => (
+                <span
+                  key={m.id}
+                  className="text-[8px] font-mono text-slate-700 border border-slate-800 px-1 py-0.5 rounded-[2px]"
+                >
+                  {m.initials}
+                </span>
+              ))}
+            </div>
+          </div>
 
-            return (
-              <motion.div
-                key={managerId}
-                initial={{ opacity: 0, x: isRight ? 16 : -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.12, duration: 0.35 }}
-                className={`px-4 py-4 border-l-2 ${MANAGER_COLORS[managerId]}`}
-              >
-                {/* Manager header */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[9px] font-black font-mono tracking-widest px-2 py-0.5 rounded-[2px] ${MANAGER_TAG_COLORS[managerId]}`}>
-                    {manager.name}
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-600">{manager.role}</span>
-                </div>
-
-                {/* Comment bubble */}
-                <div className="relative bg-slate-900/60 border border-slate-700/40 rounded-sm px-3 py-2.5">
-                  <p className="text-[12px] text-slate-300 leading-relaxed font-sans">
-                    "{comment}"
-                  </p>
-                  {/* Left notch */}
-                  <div className="absolute left-3 -top-[5px] w-2 h-2 bg-slate-900/60 border-l border-t border-slate-700/40 rotate-45" />
-                </div>
-              </motion.div>
-            );
-          })}
+          <DebatePanel playerId={player.id} refreshKey={refreshKey} />
         </div>
       </div>
     </motion.div>
   );
 }
 
-// ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function Vestuario() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -363,14 +502,13 @@ export default function Vestuario() {
             </div>
 
             {/* Filters */}
-            <div className="space-y-2">
-              {/* Era filter */}
+            <div className="space-y-1.5">
               <div className="flex gap-1.5">
                 {(["all", "current", "historic"] as const).map((e) => (
                   <button
                     key={e}
                     onClick={() => setEra(e)}
-                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase transition-colors border rounded-[2px] ${
+                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${
                       era === e
                         ? "bg-slate-700 text-white border-slate-500"
                         : "border-slate-800 text-slate-600 hover:text-slate-400"
@@ -380,14 +518,12 @@ export default function Vestuario() {
                   </button>
                 ))}
               </div>
-
-              {/* Position filter */}
               <div className="flex gap-1.5">
                 {(["all", "GK", "DEF", "MID", "FWD"] as const).map((pos) => (
                   <button
                     key={pos}
                     onClick={() => setPosition(pos)}
-                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase transition-colors border rounded-[2px] ${
+                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${
                       position === pos
                         ? "bg-slate-700 text-white border-slate-500"
                         : "border-slate-800 text-slate-600 hover:text-slate-400"
@@ -399,12 +535,10 @@ export default function Vestuario() {
               </div>
             </div>
 
-            {/* Count */}
-            <div className="text-[9px] font-mono text-slate-600 tracking-widest uppercase">
-              {filtered.length} FICHAS ENCONTRADAS
+            <div className="text-[9px] font-mono text-slate-700 tracking-widest uppercase">
+              {filtered.length} fichas encontradas
             </div>
 
-            {/* List */}
             <div className="space-y-2">
               {filtered.map((player) => (
                 <PlayerCard
@@ -416,7 +550,7 @@ export default function Vestuario() {
             </div>
 
             {filtered.length === 0 && (
-              <div className="py-12 text-center text-[11px] font-mono text-slate-700 uppercase tracking-widest">
+              <div className="py-12 text-center text-[10px] font-mono text-slate-700 uppercase tracking-widest">
                 Sin resultados para los filtros seleccionados
               </div>
             )}
