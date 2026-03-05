@@ -246,11 +246,11 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
         </div>
 
         {/* Best position */}
-        <div className="px-4 py-2 border-b border-slate-800 flex items-center gap-2">
-          <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest">
+        <div className="px-4 py-2.5 border-b border-slate-800 flex items-baseline gap-2">
+          <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest flex-shrink-0">
             Mejor posición:
           </span>
-          <span className="text-[11px] font-bold text-white">{team.bestPosition}</span>
+          <span className="text-[11px] font-bold text-white leading-snug">{team.bestPosition}</span>
         </div>
 
         {isDebut ? (
