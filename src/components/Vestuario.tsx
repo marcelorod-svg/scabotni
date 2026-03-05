@@ -176,14 +176,27 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
       <div className="h-[2px] w-full bg-slate-800" />
 
       <div className="flex">
-        {/* Photo — fixed 3:4 portrait, object-cover object-top */}
-        <div className="w-[72px] flex-shrink-0 overflow-hidden" style={{ height: 96 }}>
-          <PlayerImage
-            playerId={player.id}
-            name={player.name}
-            className="w-full h-full object-cover object-top"
-            style={{ height: 96 }}
-          />
+        {/* Photo — glow card border */}
+        <div
+          className="w-[72px] flex-shrink-0 relative"
+          style={{ height: 96 }}
+        >
+          <div
+            className="absolute inset-0 rounded-none"
+            style={{
+              background: "linear-gradient(135deg, #f5b94240 0%, #00d4aa20 50%, #f5b94240 100%)",
+              padding: "1px",
+            }}
+          >
+            <div className="w-full h-full overflow-hidden" style={{ height: "100%" }}>
+              <PlayerImage
+                playerId={player.id}
+                name={player.name}
+                className="w-full h-full object-cover object-top"
+                style={{ height: 96 }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Data */}
@@ -299,14 +312,36 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
 
         <div className="flex">
-          {/* Photo — fixed height, object-cover object-top */}
-          <div className="w-36 flex-shrink-0 overflow-hidden" style={{ height: 216 }}>
-            <PlayerImage
-              playerId={player.id}
-              name={player.name}
-              className="w-full h-full object-cover object-top"
-              style={{ height: 216 }}
+          {/* Photo — FIFA glow frame */}
+          <div className="w-36 flex-shrink-0 relative p-[1.5px]" style={{ height: 216 }}>
+            {/* Glow border gradient */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(160deg, #f5b942 0%, #00d4aa 40%, #f5b942 80%, #00d4aa 100%)",
+                borderRadius: 2,
+              }}
             />
+            {/* Outer glow */}
+            <div
+              className="absolute inset-0"
+              style={{
+                boxShadow: "0 0 18px 3px #f5b94230, 0 0 32px 6px #00d4aa18",
+                borderRadius: 2,
+              }}
+            />
+            {/* Image */}
+            <div
+              className="relative overflow-hidden w-full h-full"
+              style={{ borderRadius: 1 }}
+            >
+              <PlayerImage
+                playerId={player.id}
+                name={player.name}
+                className="w-full h-full object-cover object-top"
+                style={{ height: 213 }}
+              />
+            </div>
           </div>
 
           {/* Identity */}
