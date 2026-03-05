@@ -9,6 +9,40 @@ import {
   type TeamStats,
 } from "@/lib/worldCupData";
 
+// flagcdn.com country codes mapped to our team IDs
+const FLAG_CODES: Record<string, string> = {
+  brazil: "br",
+  germany: "de",
+  argentina: "ar",
+  italy: "it",
+  france: "fr",
+  england: "gb-eng",
+  spain: "es",
+  netherlands: "nl",
+  uruguay: "uy",
+  portugal: "pt",
+  croatia: "hr",
+  mexico: "mx",
+  morocco: "ma",
+  usa: "us",
+  japan: "jp",
+  senegal: "sn",
+};
+
+function FlagImg({ teamId, size = "md" }: { teamId: string; size?: "sm" | "md" | "lg" }) {
+  const code = FLAG_CODES[teamId];
+  const dims = size === "lg" ? "w-16 h-11" : size === "md" ? "w-9 h-6" : "w-6 h-4";
+  if (!code) return null;
+  return (
+    <img
+      src={`https://flagcdn.com/w80/${code}.png`}
+      alt={teamId}
+      className={`${dims} object-cover rounded shadow-sm`}
+      loading="lazy"
+    />
+  );
+}
+
 function StatBar({ value, max, color = "bg-sca-accent" }: { value: number; max: number; color?: string }) {
   const pct = Math.round((value / max) * 100);
   return (
@@ -33,7 +67,7 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
       className="w-full text-left rounded-xl border border-slate-700/50 bg-sca-surface/60 p-4 hover:border-sca-accent/40 transition-colors"
     >
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-3xl">{team.flag}</span>
+        <FlagImg teamId={team.id} size="md" />
         <div className="flex-1 min-w-0">
           <div className="font-bold text-white text-sm truncate">{team.name}</div>
           <div className="text-xs text-slate-500">{team.confederation} · {team.participations} participaciones</div>
@@ -81,7 +115,7 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
       {/* Header */}
       <div className="rounded-2xl border border-slate-700/50 bg-sca-surface/80 p-5">
         <div className="flex items-center gap-4 mb-4">
-          <span className="text-6xl">{team.flag}</span>
+          <FlagImg teamId={team.id} size="lg" />
           <div>
             <h2 className="text-2xl font-black text-white">{team.name}</h2>
             <div className="text-sm text-slate-400">{team.confederation}</div>
