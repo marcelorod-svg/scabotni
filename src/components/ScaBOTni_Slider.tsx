@@ -5,25 +5,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
+import { useIsMobile } from '@/hooks/useMobilePerf';
 
 import 'swiper/css';
 
-// ─── Mobile detection (hook) ──────────────────────────────────────────────────
-// Detecta mobile una sola vez al montar. No hace falta escuchar resize
-// porque el Slider es un overlay fullscreen que se abre/cierra.
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    setIsMobile(window.innerWidth <= 768);
-  }, []);
-  return isMobile;
-}
-
-// ─── CSS inyectado una sola vez ───────────────────────────────────────────────
-// Centraliza toda la lógica de "durante el swipe" y "en mobile"
-// sin depender de inline styles que se recalculan en cada render.
+// ─── CSS global (inyectado una sola vez) ──────────────────────────────────────
 const SLIDER_CSS = `
-  /* Durante el drag activo: desactiva backdrop y transiciones costosas */
   body.is-swiping .scabotni-backdrop {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -31,16 +18,12 @@ const SLIDER_CSS = `
   body.is-swiping .scabotni-slide-wrapper {
     transition: none !important;
   }
-
-  /* Mobile: backdrop ligero en reposo */
   @media (max-width: 768px) {
     .scabotni-backdrop {
       backdrop-filter: blur(4px) !important;
       -webkit-backdrop-filter: blur(4px) !important;
     }
   }
-
-  /* Desktop: backdrop completo */
   @media (min-width: 769px) {
     .scabotni-backdrop {
       backdrop-filter: blur(12px);
@@ -74,12 +57,11 @@ export function ScaBOTni_Slider<T>({
   renderCard,
   originRect,
 }: SliderProps<T>) {
+  const isMobile = useIsMobile();
   const swiperRef = useRef<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [swiperReady, setSwiperReady] = useState(false);
-  const isMobile = useIsMobile();
 
-  // ── Sincronizar slide al abrir ─────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
       setActiveIndex(initialIndex);
@@ -92,13 +74,11 @@ export function ScaBOTni_Slider<T>({
     }
   }, [isOpen, initialIndex]);
 
-  // ── Lock scroll del body ───────────────────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  // ── Escape key ────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
@@ -107,9 +87,6 @@ export function ScaBOTni_Slider<T>({
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  // ── Clase "is-swiping" en el body durante el drag ─────────────────────────
-  // Así el CSS puede deshabilitar backdrop-filter y transiciones mid-swipe
-  // sin ningún re-render de React.
   const handleTouchStart = useCallback(() => {
     document.body.classList.add('is-swiping');
   }, []);
@@ -122,7 +99,7 @@ export function ScaBOTni_Slider<T>({
     setActiveIndex(swiper.activeIndex);
   }, []);
 
-  // ── Animación fly-in desde la card origen ─────────────────────────────────
+  // ── Animación fly-in ──────────────────────────────────────────────────────
   const flyOrigin = originRect
     ? {
         x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
@@ -131,7 +108,7 @@ export function ScaBOTni_Slider<T>({
         scaleY: originRect.height / window.innerHeight,
         opacity: 0,
       }
-    : { scale: 0.88, opacity: 0 };
+    : { scale: 0.92, opacity: 0 };
 
   const flyTarget = originRect
     ? { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1 }
@@ -145,42 +122,59 @@ export function ScaBOTni_Slider<T>({
         scaleY: originRect.height / window.innerHeight,
         opacity: 0,
       }
-    : { scale: 0.88, opacity: 0 };
+    : { scale: 0.92, opacity: 0 };
+
+  // PATCH: spring del fly-in diferenciado por dispositivo.
+  //
+  // El problema en mobile: stiffness=340 + mass=0.8 genera una animación de
+  // ~480ms con overshoot. Se siente "pesada" porque la card tarda en asentarse.
+  //
+  // En mobile usamos:
+  //   - stiffness alta (500) → arranca rápido
+  //   - damping alto (42)    → frena sin rebotar
+  //   - mass baja (0.6)      → responde casi inmediatamente al input
+  // Resultado: la card aparece en ~220ms, sin overshoot perceptible.
+  //
+  // Si no hay originRect (no hay fly-in, solo fade+scale), en mobile
+  // usamos tween directo: más predecible y aún más rápido.
+  const flyTransition = originRect
+    ? (isMobile
+        ? { type: 'spring' as const, stiffness: 500, damping: 42, mass: 0.6 }
+        : { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 })
+    : (isMobile
+        ? { type: 'tween' as const, duration: 0.18, ease: 'easeOut' }
+        : { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 });
 
   return (
     <>
       <SliderStyles />
-
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* ── Backdrop ─────────────────────────────────────────────────── */}
-            {/* backdrop-filter controlado por CSS (.scabotni-backdrop)         */}
-            {/* NO por inline style, así el browser puede cachear la capa.     */}
+            {/* Backdrop */}
             <motion.div
               key="slider-backdrop"
               className="scabotni-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={onClose}
               style={{
                 position: 'fixed',
                 inset: 0,
                 zIndex: 1000,
                 background: 'rgba(7, 10, 18, 0.88)',
-                // backdrop-filter viene de la clase CSS, no de aquí
               }}
             />
 
-            {/* ── Contenedor principal ─────────────────────────────────────── */}
+            {/* Contenedor principal */}
             <motion.div
               key="slider-container"
               initial={flyOrigin}
               animate={flyTarget}
               exit={flyExit}
-              transition={{ type: 'spring', stiffness: 340, damping: 30, mass: 0.8 }}
+              transition={flyTransition}
               style={{
                 position: 'fixed',
                 inset: 0,
@@ -195,7 +189,7 @@ export function ScaBOTni_Slider<T>({
                 pointerEvents: 'none',
               }}
             >
-              {/* ── Botón cerrar ───────────────────────────────────────────── */}
+              {/* Botón cerrar */}
               <motion.button
                 onClick={onClose}
                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -211,7 +205,6 @@ export function ScaBOTni_Slider<T>({
                   borderRadius: '50%',
                   border: '1px solid rgba(245,185,66,0.35)',
                   background: 'rgba(13,17,23,0.75)',
-                  // Sin backdropFilter en este botón en mobile: no es necesario
                   ...(isMobile ? {} : {
                     backdropFilter: 'blur(8px)',
                     WebkitBackdropFilter: 'blur(8px)',
@@ -231,11 +224,11 @@ export function ScaBOTni_Slider<T>({
                 ✕
               </motion.button>
 
-              {/* ── Counter ────────────────────────────────────────────────── */}
+              {/* Counter */}
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: swiperReady ? 1 : 0, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
+                transition={{ delay: 0.15, duration: 0.2 }}
                 style={{
                   position: 'fixed',
                   top: 22,
@@ -254,24 +247,14 @@ export function ScaBOTni_Slider<T>({
                 {activeIndex + 1} / {items.length}
               </motion.div>
 
-              {/* ── Swiper ─────────────────────────────────────────────────── */}
+              {/* Swiper */}
               <div
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: '100%',
-                  maxWidth: 520,
-                  pointerEvents: 'all',
-                }}
+                style={{ width: '100%', maxWidth: 520, pointerEvents: 'all' }}
               >
                 <Swiper
                   modules={[Virtual, Keyboard, A11y]}
-                  virtual={{
-                    enabled: true,
-                    // Renderiza solo 1 slide a cada lado del activo.
-                    // Con 48 items, esto pasa de ~48 nodos a 3 en el DOM.
-                    addSlidesAfter: 1,
-                    addSlidesBefore: 1,
-                  }}
+                  virtual={{ enabled: true, addSlidesAfter: 1, addSlidesBefore: 1 }}
                   keyboard={{ enabled: true }}
                   spaceBetween={24}
                   slidesPerView={1}
@@ -279,20 +262,14 @@ export function ScaBOTni_Slider<T>({
                   initialSlide={initialIndex}
                   onSwiper={(swiper) => { swiperRef.current = swiper; }}
                   onSlideChange={handleSlideChange}
-                  // Agregar/quitar clase CSS mid-swipe (sin re-render de React)
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}
-                  // touchEnd no siempre dispara si el usuario levanta rápido:
                   onTransitionEnd={handleTouchEnd}
                   grabCursor
                   resistance
                   resistanceRatio={0.65}
-                  // Velocidad levemente más baja = sensación más física en iOS
-                  speed={320}
-                  cssMode={false}
-                  // touch ratio: 1 = natural, sin multiplicador que cause over-scroll
+                  speed={300}
                   touchRatio={1}
-                  // En mobile, threshold más alto evita swipes accidentales
                   threshold={isMobile ? 8 : 4}
                   style={{ width: '100%', padding: '4px 0 8px' }}
                 >
@@ -308,12 +285,12 @@ export function ScaBOTni_Slider<T>({
                 </Swiper>
               </div>
 
-              {/* ── Nav dots ───────────────────────────────────────────────── */}
+              {/* Nav dots */}
               {items.length <= 20 && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: swiperReady ? 1 : 0 }}
-                  transition={{ delay: 0.25 }}
+                  transition={{ delay: 0.2 }}
                   style={{ pointerEvents: 'all', marginTop: 12 }}
                 >
                   <NavDots
@@ -335,44 +312,32 @@ export function ScaBOTni_Slider<T>({
 
 // ─── SlideWrapper ─────────────────────────────────────────────────────────────
 
-interface SlideWrapperProps {
+function SlideWrapper({
+  isActive,
+  isMobile,
+  children,
+}: {
   isActive: boolean;
   isMobile: boolean;
   children: React.ReactNode;
-}
-
-function SlideWrapper({ isActive, isMobile, children }: SlideWrapperProps) {
+}) {
   return (
     <motion.div
       className="scabotni-slide-wrapper"
       animate={
         isMobile
-          ? // Mobile: solo escala + opacidad. Sin blur = sin GPU overdraw.
-            {
-              scale: isActive ? 1 : 0.94,
-              opacity: isActive ? 1 : 0.35,
-              // Sin filter en mobile
-            }
-          : // Desktop: escala + opacidad + blur suave
-            {
-              scale: isActive ? 1 : 0.93,
-              opacity: isActive ? 1 : 0.4,
-              filter: isActive ? 'blur(0px)' : 'blur(2px)',
-            }
+          ? { scale: isActive ? 1 : 0.96, opacity: isActive ? 1 : 0.35 }
+          : { scale: isActive ? 1 : 0.93, opacity: isActive ? 1 : 0.4, filter: isActive ? 'blur(0px)' : 'blur(2px)' }
       }
       transition={
         isMobile
-          ? // Transición más rápida en mobile = respuesta inmediata
-            { type: 'tween', duration: 0.18, ease: 'easeOut' }
+          ? { type: 'tween', duration: 0.15, ease: 'easeOut' }
           : { type: 'spring', stiffness: 300, damping: 28, mass: 0.7 }
       }
       style={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        // willChange solo en desktop. En mobile el browser
-        // promueve la capa solo cuando hace falta, evitando
-        // memory pressure innecesaria.
         willChange: isMobile ? 'auto' : 'transform, opacity',
       }}
     >
@@ -406,18 +371,10 @@ function NavDots({
           onClick={() => onDotClick(i)}
           animate={{
             width: i === active ? 20 : 6,
-            background:
-              i === active ? '#f5b942' : 'rgba(245,185,66,0.28)',
+            background: i === active ? '#f5b942' : 'rgba(245,185,66,0.28)',
           }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          style={{
-            height: 6,
-            borderRadius: 3,
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            outline: 'none',
-          }}
+          style={{ height: 6, borderRadius: 3, border: 'none', cursor: 'pointer', padding: 0, outline: 'none' }}
           aria-label={`Ir al item ${i + 1}`}
         />
       ))}
@@ -429,7 +386,6 @@ function NavDots({
 
 function SwipeHint() {
   const [visible, setVisible] = useState(true);
-
   useEffect(() => {
     const t = setTimeout(() => setVisible(false), 2800);
     return () => clearTimeout(t);
@@ -460,19 +416,9 @@ function SwipeHint() {
             whiteSpace: 'nowrap',
           }}
         >
-          <motion.span
-            animate={{ x: [-4, 4, -4] }}
-            transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-          >
-            ←
-          </motion.span>
+          <motion.span animate={{ x: [-4, 4, -4] }} transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}>←</motion.span>
           Deslizá para navegar
-          <motion.span
-            animate={{ x: [4, -4, 4] }}
-            transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-          >
-            →
-          </motion.span>
+          <motion.span animate={{ x: [4, -4, 4] }} transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}>→</motion.span>
         </motion.div>
       )}
     </AnimatePresence>
