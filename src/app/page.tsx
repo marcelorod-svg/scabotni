@@ -16,19 +16,17 @@ import Vestuario from "@/components/Vestuario";
 import { mockMatches } from "@/lib/mockData";
 import { getManagerPrediction } from "@/lib/managers";
 import type { Match, Manager, UserPrediction } from "@/lib/types";
+import { useIsMobile } from "@/hooks/useMobilePerf";
 
 type FlowStep = "list" | "managers" | "thinking" | "prediction" | "contradict" | "done";
 
 export default function Home() {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<TabId>("predictions");
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedManager, setSelectedManager] = useState<Manager | null>(null);
-  const [prediction, setPrediction] = useState<ReturnType<
-    typeof getManagerPrediction
-  > | null>(null);
-  const [userPredictions, setUserPredictions] = useState<
-    Record<string, UserPrediction>
-  >({});
+  const [prediction, setPrediction] = useState<ReturnType<typeof getManagerPrediction> | null>(null);
+  const [userPredictions, setUserPredictions] = useState<Record<string, UserPrediction>>({});
   const [step, setStep] = useState<FlowStep>("list");
   const [showEgoModal, setShowEgoModal] = useState(false);
 
@@ -119,34 +117,73 @@ export default function Home() {
     setStep("managers");
   }, []);
 
-  const userPred = selectedMatch && selectedManager
-    ? userPredictions[`${selectedMatch.id}-${selectedManager.id}`]
-    : undefined;
+  const userPred =
+    selectedMatch && selectedManager
+      ? userPredictions[`${selectedMatch.id}-${selectedManager.id}`]
+      : undefined;
+
+  // Variantes de animación según dispositivo.
+  // Mobile: solo opacity, sin y (elimina el cálculo de transform en cada frame).
+  // Desktop: opacity + y, igual que antes.
+  const tabVariants = isMobile
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit:    { opacity: 0 },
+      }
+    : {
+        initial: { opacity: 0, y: 8 },
+        animate: { opacity: 1, y: 0 },
+        exit:    { opacity: 0, y: -8 },
+      };
+
+  const tabTransition = isMobile
+    ? { duration: 0.12 }   // 120 ms — prácticamente instantáneo
+    : { duration: 0.25 };
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="border-b border-slate-800 bg-sca-dark/80 backdrop-blur sticky top-0 z-10">
+
+      {/* PATCH: header sticky.
+          En mobile: bg sólido, sin backdrop-blur.
+          El sticky + backdrop-blur crea una capa de compositing permanente
+          que compite con el Slider y las cards en cada frame. */}
+      <header
+        className={`border-b border-slate-800 sticky top-0 z-10 ${
+          isMobile ? "bg-sca-dark" : "bg-sca-dark/80 backdrop-blur"
+        }`}
+      >
         <div className="max-w-2xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-white tracking-tight">
             Sca<span className="text-sca-accent">BOT</span>ni
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             {activeTab === "predictions" && "Football predictions with theatrical AI managers"}
-            {activeTab === "central" && "Historia del Mundial · 1930 — 2022"}
-            {activeTab === "vestuario" && "Las figuras del fútbol mundial"}
+            {activeTab === "central"     && "Historia del Mundial · 1930 — 2022"}
+            {activeTab === "vestuario"   && "Las figuras del fútbol mundial"}
           </p>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <AnimatePresence mode="wait">
+        {/*
+          PATCH: AnimatePresence mode.
+          mode="wait" espera que el exit termine antes de montar el enter.
+          Con duration 0.25 eso son ~500 ms percibidos (salida + entrada).
+          En mobile usamos mode="sync": ambas corren en paralelo con 0.12 s
+          → el tab nuevo aparece en ~120 ms, que se siente instantáneo.
+          En desktop se mantiene mode="wait" para el efecto limpio original.
+        */}
+        <AnimatePresence mode={isMobile ? "sync" : "wait"}>
+
           {activeTab === "predictions" && (
             <motion.div
               key="predictions"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+              variants={tabVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={tabTransition}
             >
               {step === "list" && (
                 <MatchList matches={mockMatches} onSelectMatch={handleSelectMatch} />
@@ -187,32 +224,29 @@ export default function Home() {
                 </div>
               )}
 
-              {step === "prediction" &&
-                selectedMatch &&
-                selectedManager &&
-                prediction && (
-                  <motion.div
-                    key="prediction"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="space-y-6"
+              {step === "prediction" && selectedMatch && selectedManager && prediction && (
+                <motion.div
+                  key="prediction"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="space-y-6"
+                >
+                  <button
+                    onClick={handleBackToManagers}
+                    className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
                   >
-                    <button
-                      onClick={handleBackToManagers}
-                      className="text-sm text-slate-500 hover:text-white flex items-center gap-1"
-                    >
-                      ← Pick another manager
-                    </button>
-                    <ManagerPrediction
-                      match={selectedMatch}
-                      prediction={prediction}
-                      onFollow={handleFollow}
-                      onContradict={handleContradict}
-                      showUserInput={!userPred}
-                    />
-                  </motion.div>
-                )}
+                    ← Pick another manager
+                  </button>
+                  <ManagerPrediction
+                    match={selectedMatch}
+                    prediction={prediction}
+                    onFollow={handleFollow}
+                    onContradict={handleContradict}
+                    showUserInput={!userPred}
+                  />
+                </motion.div>
+              )}
 
               {step === "contradict" && selectedMatch && selectedManager && (
                 <div className="space-y-6">
@@ -230,42 +264,38 @@ export default function Home() {
                 </div>
               )}
 
-              {step === "done" &&
-                selectedMatch &&
-                selectedManager &&
-                prediction &&
-                userPred && (
-                  <div className="space-y-6">
-                    <ManagerPrediction
-                      match={selectedMatch}
-                      prediction={prediction}
-                      onFollow={handleFollow}
-                      onContradict={handleContradict}
-                      userPrediction={{
-                        homeScore: userPred.homeScore,
-                        awayScore: userPred.awayScore,
-                        followed: userPred.followedManager,
-                      }}
-                      showUserInput={false}
-                    />
-                    <ShareableCard
-                      match={selectedMatch}
-                      manager={selectedManager}
-                      prediction={prediction}
-                      userPrediction={{
-                        homeScore: userPred.homeScore,
-                        awayScore: userPred.awayScore,
-                        followed: userPred.followedManager,
-                      }}
-                    />
-                    <button
-                      onClick={handleBackToList}
-                      className="w-full py-3 rounded-xl font-bold border border-sca-accent text-sca-accent hover:bg-sca-accent/10 transition-colors"
-                    >
-                      Predict another match
-                    </button>
-                  </div>
-                )}
+              {step === "done" && selectedMatch && selectedManager && prediction && userPred && (
+                <div className="space-y-6">
+                  <ManagerPrediction
+                    match={selectedMatch}
+                    prediction={prediction}
+                    onFollow={handleFollow}
+                    onContradict={handleContradict}
+                    userPrediction={{
+                      homeScore: userPred.homeScore,
+                      awayScore: userPred.awayScore,
+                      followed: userPred.followedManager,
+                    }}
+                    showUserInput={false}
+                  />
+                  <ShareableCard
+                    match={selectedMatch}
+                    manager={selectedManager}
+                    prediction={prediction}
+                    userPrediction={{
+                      homeScore: userPred.homeScore,
+                      awayScore: userPred.awayScore,
+                      followed: userPred.followedManager,
+                    }}
+                  />
+                  <button
+                    onClick={handleBackToList}
+                    className="w-full py-3 rounded-xl font-bold border border-sca-accent text-sca-accent hover:bg-sca-accent/10 transition-colors"
+                  >
+                    Predict another match
+                  </button>
+                </div>
+              )}
 
               <PragmaPlate />
             </motion.div>
@@ -274,10 +304,11 @@ export default function Home() {
           {activeTab === "central" && (
             <motion.div
               key="central"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+              variants={tabVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={tabTransition}
             >
               <CentralDeDatos />
             </motion.div>
@@ -286,14 +317,16 @@ export default function Home() {
           {activeTab === "vestuario" && (
             <motion.div
               key="vestuario"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+              variants={tabVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={tabTransition}
             >
               <Vestuario />
             </motion.div>
           )}
+
         </AnimatePresence>
       </main>
 
