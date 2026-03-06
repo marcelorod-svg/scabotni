@@ -508,33 +508,49 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
             Historial Copa del Mundo
           </div>
-          <div className="grid grid-cols-4 gap-1">
-            {[
-              { label: "Part.", value: player.wc_participaciones },
-              { label: "PJ", value: player.wc_partidos },
-              { label: "Goles", value: player.wc_goles },
-              {
-                label: Number(player.wc_titulos) === 1 ? "Campeón" : "Títulos",
-                value: Number(player.wc_titulos) > 0
-                  ? `${player.wc_titulos}×`
-                  : "0",
-                gold: Number(player.wc_titulos) > 0,
-              },
-            ].map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
-                <span
-                  className="text-lg font-black tabular-nums leading-none"
-                  style={{ color: (s as {gold?:boolean}).gold ? "#f5b942" : "white",
-                    textShadow: (s as {gold?:boolean}).gold ? "0 0 10px rgba(245,185,66,0.5)" : "none" }}
-                >
-                  {s.value}
-                </span>
-                <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
-                  {s.label}
-                </span>
+          {(() => {
+            const titulosStr = player.wc_titulos ?? "—";
+            const numTitulos = parseInt(titulosStr) || 0;
+            const isChampion = titulosStr.includes("Campeón");
+            const isRunnerUp = titulosStr.includes("Subcampeón");
+            const stats = [
+              { label: "Part.", value: String(player.wc_participaciones), gold: false },
+              { label: "PJ", value: String(player.wc_partidos), gold: false },
+              { label: "Goles", value: String(player.wc_goles), gold: false },
+            ];
+            return (
+              <div className="grid grid-cols-4 gap-1">
+                {stats.map((s) => (
+                  <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
+                    <span className="text-lg font-black tabular-nums leading-none text-white">
+                      {s.value}
+                    </span>
+                    <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                ))}
+                {/* Títulos cell */}
+                <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
+                  {isChampion ? (
+                    <div className="flex items-center gap-0.5">
+                      <img src="/images/copa_mundial.png" alt="copa" style={{ width: 16, height: 16, objectFit: "contain", filter: "drop-shadow(0 0 4px rgba(245,185,66,0.7))" }} />
+                      <span className="text-lg font-black leading-none text-sca-gold" style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>
+                        {numTitulos}
+                      </span>
+                    </div>
+                  ) : isRunnerUp ? (
+                    <span className="text-lg font-black leading-none" style={{ color: "#94a3b8" }}>🥈</span>
+                  ) : (
+                    <span className="text-lg font-black leading-none text-white">—</span>
+                  )}
+                  <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
+                    {isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}
+                  </span>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       </div>
 
