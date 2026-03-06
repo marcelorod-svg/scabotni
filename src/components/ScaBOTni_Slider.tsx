@@ -99,51 +99,50 @@ export function ScaBOTni_Slider<T>({
     setActiveIndex(swiper.activeIndex);
   }, []);
 
-  // ── Animación fly-in ──────────────────────────────────────────────────────
-  const flyOrigin = originRect
-    ? {
-        x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
-        y: originRect.top + originRect.height / 2 - window.innerHeight / 2,
-        scaleX: originRect.width / window.innerWidth,
-        scaleY: originRect.height / window.innerHeight,
-        opacity: 0,
-      }
-    : { scale: 0.92, opacity: 0 };
-
-  const flyTarget = originRect
-    ? { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1 }
-    : { scale: 1, opacity: 1 };
-
-  const flyExit = originRect
-    ? {
-        x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
-        y: originRect.top + originRect.height / 2 - window.innerHeight / 2,
-        scaleX: originRect.width / window.innerWidth,
-        scaleY: originRect.height / window.innerHeight,
-        opacity: 0,
-      }
-    : { scale: 0.92, opacity: 0 };
-
-  // PATCH: spring del fly-in diferenciado por dispositivo.
+  // ── Animación de apertura ─────────────────────────────────────────────────
   //
-  // El problema en mobile: stiffness=340 + mass=0.8 genera una animación de
-  // ~480ms con overshoot. Se siente "pesada" porque la card tarda en asentarse.
+  // MOBILE: slide-up simple desde abajo (como sheet nativo de iOS).
+  // El fly-in desde originRect requiere animar scaleX/scaleY simultáneamente
+  // mientras se renderiza todo el contenido — en mobile eso son ~400ms de lag.
+  // Con slide-up la card aparece en ~180ms y el contenido ya está en su lugar.
   //
-  // En mobile usamos:
-  //   - stiffness alta (500) → arranca rápido
-  //   - damping alto (42)    → frena sin rebotar
-  //   - mass baja (0.6)      → responde casi inmediatamente al input
-  // Resultado: la card aparece en ~220ms, sin overshoot perceptible.
-  //
-  // Si no hay originRect (no hay fly-in, solo fade+scale), en mobile
-  // usamos tween directo: más predecible y aún más rápido.
-  const flyTransition = originRect
-    ? (isMobile
-        ? { type: 'spring' as const, stiffness: 500, damping: 42, mass: 0.6 }
-        : { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 })
-    : (isMobile
-        ? { type: 'tween' as const, duration: 0.18, ease: 'easeOut' }
-        : { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 });
+  // DESKTOP: fly-in original desde la card clickeada.
+
+  const flyOrigin = isMobile
+    ? { y: '100%', opacity: 0 }
+    : originRect
+      ? {
+          x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
+          y: originRect.top + originRect.height / 2 - window.innerHeight / 2,
+          scaleX: originRect.width / window.innerWidth,
+          scaleY: originRect.height / window.innerHeight,
+          opacity: 0,
+        }
+      : { scale: 0.92, opacity: 0 };
+
+  const flyTarget = isMobile
+    ? { y: 0, opacity: 1 }
+    : originRect
+      ? { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1 }
+      : { scale: 1, opacity: 1 };
+
+  const flyExit = isMobile
+    ? { y: '100%', opacity: 0 }
+    : originRect
+      ? {
+          x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
+          y: originRect.top + originRect.height / 2 - window.innerHeight / 2,
+          scaleX: originRect.width / window.innerWidth,
+          scaleY: originRect.height / window.innerHeight,
+          opacity: 0,
+        }
+      : { scale: 0.92, opacity: 0 };
+
+  const flyTransition = isMobile
+    ? { type: 'tween' as const, duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }
+    : originRect
+      ? { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 }
+      : { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.8 };
 
   return (
     <>
@@ -326,7 +325,7 @@ function SlideWrapper({
       className="scabotni-slide-wrapper"
       animate={
         isMobile
-          ? { scale: isActive ? 1 : 0.96, opacity: isActive ? 1 : 0.35 }
+          ? { scale: isActive ? 1 : 0.98, opacity: isActive ? 1 : 0.25 }
           : { scale: isActive ? 1 : 0.93, opacity: isActive ? 1 : 0.4, filter: isActive ? 'blur(0px)' : 'blur(2px)' }
       }
       transition={
