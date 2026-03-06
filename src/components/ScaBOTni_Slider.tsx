@@ -1,71 +1,25 @@
 'use client';
 
-/**
- * ScaBOTni_Slider
- * ---------------
- * Modal/overlay que recibe un array de datos (playerData o worldCupData)
- * y el componente-carta ya existente, y provee navegación por swipe.
- *
- * DEPENDENCIAS (agregar al proyecto si no están):
- *   npm install swiper
- *   (framer-motion ya está en el proyecto)
- *
- * USO EN Vestuario.tsx:
- *   import { ScaBOTni_Slider } from '@/components/ScaBOTni_Slider';
- *   <ScaBOTni_Slider
- *     items={playerData}
- *     initialIndex={clickedIndex}
- *     isOpen={sliderOpen}
- *     onClose={() => setSliderOpen(false)}
- *     renderCard={(item, isActive) => <PlayerDetailCard player={item} />}
- *     originRect={originRect}   // ← getBoundingClientRect() de la card clickeada
- *   />
- *
- * USO EN CentralDeDatos.tsx:
- *   <ScaBOTni_Slider
- *     items={worldCupTeams}
- *     initialIndex={clickedIndex}
- *     isOpen={sliderOpen}
- *     onClose={() => setSliderOpen(false)}
- *     renderCard={(item, isActive) => <TeamDetailCard team={item} />}
- *     originRect={originRect}
- *   />
- */
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 
-// ─── Swiper core styles (importar una sola vez en el proyecto) ───────────────
-// Si ya están en globals.css, eliminá estas dos líneas:
 import 'swiper/css';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface SliderProps<T> {
-  /** Array completo de items (playerData / worldCupTeams) */
   items: T[];
-  /** Índice del item que se clickeó para abrir el slider */
   initialIndex: number;
-  /** Controla visibilidad del modal */
   isOpen: boolean;
-  /** Callback para cerrar – el padre restaura el scroll */
   onClose: () => void;
-  /**
-   * Render prop: recibe el item y si es el slide activo.
-   * Renderizá aquí el componente de carta ya existente SIN modificarlo.
-   */
   renderCard: (item: T, isActive: boolean) => React.ReactNode;
-  /**
-   * DOMRect de la card clickeada (para la animación de "volar" hacia el centro).
-   * Obtener con: ref.current.getBoundingClientRect()
-   */
   originRect?: DOMRect | null;
 }
 
-// ─── Componente ──────────────────────────────────────────────────────────────
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export function ScaBOTni_Slider<T>({
   items,
@@ -79,12 +33,10 @@ export function ScaBOTni_Slider<T>({
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [swiperReady, setSwiperReady] = useState(false);
 
-  // Sincronizar índice cuando se abre desde distintas cards
   useEffect(() => {
     if (isOpen) {
       setActiveIndex(initialIndex);
       setSwiperReady(false);
-      // Pequeño delay para que el overlay monte antes de saltar al slide
       const t = setTimeout(() => {
         swiperRef.current?.slideTo(initialIndex, 0);
         setSwiperReady(true);
@@ -93,19 +45,15 @@ export function ScaBOTni_Slider<T>({
     }
   }, [isOpen, initialIndex]);
 
-  // Bloquear scroll del body mientras el modal está abierto
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  // Cerrar con Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
@@ -118,9 +66,7 @@ export function ScaBOTni_Slider<T>({
     setActiveIndex(swiper.activeIndex);
   }, []);
 
-  // ── Calcular origen para la animación "fly-in" ────────────────────────────
-  // Si tenemos el DOMRect de la card origen, arrancamos desde ahí.
-  // Si no, simplemente escaleamos desde el centro.
+  // ── Animación fly-in desde la card origen ─────────────────────────────────
   const flyOrigin = originRect
     ? {
         x: originRect.left + originRect.width / 2 - window.innerWidth / 2,
@@ -129,7 +75,7 @@ export function ScaBOTni_Slider<T>({
         scaleY: originRect.height / window.innerHeight,
         opacity: 0,
       }
-    : { scale: 0.85, opacity: 0 };
+    : { scale: 0.88, opacity: 0 };
 
   const flyTarget = originRect
     ? { x: 0, y: 0, scaleX: 1, scaleY: 1, opacity: 1 }
@@ -143,16 +89,15 @@ export function ScaBOTni_Slider<T>({
         scaleY: originRect.height / window.innerHeight,
         opacity: 0,
       }
-    : { scale: 0.85, opacity: 0 };
+    : { scale: 0.88, opacity: 0 };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* ── Backdrop ─────────────────────────────────────────────────── */}
+          {/* Backdrop */}
           <motion.div
             key="slider-backdrop"
-            className="scabotni-slider-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -168,19 +113,13 @@ export function ScaBOTni_Slider<T>({
             }}
           />
 
-          {/* ── Contenedor del slider ─────────────────────────────────────── */}
+          {/* Contenedor principal */}
           <motion.div
             key="slider-container"
-            className="scabotni-slider-container"
             initial={flyOrigin}
             animate={flyTarget}
             exit={flyExit}
-            transition={{
-              type: 'spring',
-              stiffness: 340,
-              damping: 30,
-              mass: 0.8,
-            }}
+            transition={{ type: 'spring', stiffness: 340, damping: 30, mass: 0.8 }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -188,20 +127,25 @@ export function ScaBOTni_Slider<T>({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none', // el backdrop maneja el click-fuera
+              // ← Alineación desde arriba con padding-top,
+              //   así cards de distinta altura no generan desnivel al swipear
+              justifyContent: 'flex-start',
+              paddingTop: 56, // espacio para el counter y botón X
+              paddingBottom: 48,
+              overflowY: 'auto',
+              pointerEvents: 'none',
             }}
           >
-            {/* ── Botón cerrar ─────────────────────────────────────────── */}
+            {/* Botón cerrar */}
             <motion.button
               onClick={onClose}
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               style={{
-                position: 'absolute',
-                top: 20,
-                right: 20,
+                position: 'fixed',
+                top: 16,
+                right: 16,
                 zIndex: 10,
                 width: 40,
                 height: 40,
@@ -224,13 +168,13 @@ export function ScaBOTni_Slider<T>({
               ✕
             </motion.button>
 
-            {/* ── Counter ──────────────────────────────────────────────── */}
+            {/* Counter */}
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: swiperReady ? 1 : 0, y: 0 }}
               transition={{ delay: 0.2, duration: 0.3 }}
               style={{
-                position: 'absolute',
+                position: 'fixed',
                 top: 22,
                 left: '50%',
                 transform: 'translateX(-50%)',
@@ -241,12 +185,13 @@ export function ScaBOTni_Slider<T>({
                 textTransform: 'uppercase',
                 pointerEvents: 'none',
                 whiteSpace: 'nowrap',
+                zIndex: 10,
               }}
             >
               {activeIndex + 1} / {items.length}
             </motion.div>
 
-            {/* ── Swiper ───────────────────────────────────────────────── */}
+            {/* Swiper */}
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
@@ -263,24 +208,19 @@ export function ScaBOTni_Slider<T>({
                 slidesPerView={1}
                 centeredSlides
                 initialSlide={initialIndex}
-                onSwiper={(swiper) => {
-                  swiperRef.current = swiper;
-                }}
+                onSwiper={(swiper) => { swiperRef.current = swiper; }}
                 onSlideChange={handleSlideChange}
                 grabCursor
                 resistance
                 resistanceRatio={0.65}
                 speed={380}
                 cssMode={false}
-                style={{
-                  width: '100%',
-                  padding: '8px 0 24px',
-                }}
+                style={{ width: '100%', padding: '4px 0 8px' }}
               >
                 {items.map((item, index) => (
                   <SwiperSlide key={index} virtualIndex={index}>
                     {({ isActive }: { isActive: boolean }) => (
-                      <SlideWrapper isActive={isActive} swiperReady={swiperReady}>
+                      <SlideWrapper isActive={isActive}>
                         {renderCard(item, isActive)}
                       </SlideWrapper>
                     )}
@@ -289,16 +229,22 @@ export function ScaBOTni_Slider<T>({
               </Swiper>
             </div>
 
-            {/* ── Dots de navegación ───────────────────────────────────── */}
+            {/* Nav dots */}
             {items.length <= 20 && (
-              <NavDots
-                total={items.length}
-                active={activeIndex}
-                onDotClick={(i) => swiperRef.current?.slideTo(i)}
-              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: swiperReady ? 1 : 0 }}
+                transition={{ delay: 0.25 }}
+                style={{ pointerEvents: 'all', marginTop: 12 }}
+              >
+                <NavDots
+                  total={items.length}
+                  active={activeIndex}
+                  onDotClick={(i) => swiperRef.current?.slideTo(i)}
+                />
+              </motion.div>
             )}
 
-            {/* ── Hint de swipe (desaparece al primer swipe) ──────────── */}
             <SwipeHint />
           </motion.div>
         </>
@@ -307,34 +253,28 @@ export function ScaBOTni_Slider<T>({
   );
 }
 
-// ─── SlideWrapper: anima la carta activa vs. las adyacentes ─────────────────
+// ─── SlideWrapper ─────────────────────────────────────────────────────────────
 
 function SlideWrapper({
   isActive,
-  swiperReady,
   children,
 }: {
   isActive: boolean;
-  swiperReady: boolean;
   children: React.ReactNode;
 }) {
   return (
     <motion.div
       animate={{
-        scale: isActive ? 1 : 0.92,
-        opacity: isActive ? 1 : 0.45,
-        y: isActive ? 0 : 12,
+        scale: isActive ? 1 : 0.93,
+        opacity: isActive ? 1 : 0.4,
         filter: isActive ? 'blur(0px)' : 'blur(2px)',
       }}
-      transition={{
-        type: 'spring',
-        stiffness: 300,
-        damping: 28,
-        mass: 0.7,
-      }}
+      transition={{ type: 'spring', stiffness: 300, damping: 28, mass: 0.7 }}
       style={{
+        // ← Alinear desde arriba dentro del slide, no centrar
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'flex-start',
         willChange: 'transform, opacity',
       }}
     >
@@ -343,18 +283,13 @@ function SlideWrapper({
   );
 }
 
-// ─── NavDots ─────────────────────────────────────────────────────────────────
+// ─── NavDots ──────────────────────────────────────────────────────────────────
 
 function NavDots({
-  total,
-  active,
-  onDotClick,
+  total, active, onDotClick,
 }: {
-  total: number;
-  active: number;
-  onDotClick: (i: number) => void;
+  total: number; active: number; onDotClick: (i: number) => void;
 }) {
-  // Mostrar máximo 9 dots, con el activo siempre visible
   const maxDots = 9;
   let start = Math.max(0, active - Math.floor(maxDots / 2));
   const end = Math.min(total, start + maxDots);
@@ -362,15 +297,7 @@ function NavDots({
   const visible = Array.from({ length: end - start }, (_, i) => start + i);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 6,
-        marginTop: 4,
-        alignItems: 'center',
-        pointerEvents: 'all',
-      }}
-    >
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
       {visible.map((i) => (
         <motion.button
           key={i}
@@ -380,14 +307,7 @@ function NavDots({
             background: i === active ? '#f5b942' : 'rgba(245,185,66,0.28)',
           }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          style={{
-            height: 6,
-            borderRadius: 3,
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            outline: 'none',
-          }}
+          style={{ height: 6, borderRadius: 3, border: 'none', cursor: 'pointer', padding: 0, outline: 'none' }}
           aria-label={`Ir al item ${i + 1}`}
         />
       ))}
@@ -395,7 +315,7 @@ function NavDots({
   );
 }
 
-// ─── SwipeHint ───────────────────────────────────────────────────────────────
+// ─── SwipeHint ────────────────────────────────────────────────────────────────
 
 function SwipeHint() {
   const [visible, setVisible] = useState(true);
@@ -414,8 +334,10 @@ function SwipeHint() {
           exit={{ opacity: 0, y: 4 }}
           transition={{ duration: 0.4 }}
           style={{
-            position: 'absolute',
-            bottom: 28,
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -425,21 +347,12 @@ function SwipeHint() {
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
             pointerEvents: 'none',
+            whiteSpace: 'nowrap',
           }}
         >
-          <motion.span
-            animate={{ x: [-4, 4, -4] }}
-            transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-          >
-            ←
-          </motion.span>
+          <motion.span animate={{ x: [-4, 4, -4] }} transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}>←</motion.span>
           Deslizá para navegar
-          <motion.span
-            animate={{ x: [4, -4, 4] }}
-            transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-          >
-            →
-          </motion.span>
+          <motion.span animate={{ x: [4, -4, 4] }} transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}>→</motion.span>
         </motion.div>
       )}
     </AnimatePresence>
