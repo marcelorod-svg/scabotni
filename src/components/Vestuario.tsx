@@ -464,6 +464,63 @@ function PizarraOverlay({ player, onClose }: { player: Player; onClose: () => vo
 
 // ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
 
+// Skeleton liviano: nombre + overall + posición. Sin box-shadows complejos,
+// sin StatBars, sin historial WC. Se muestra durante la animación de apertura
+// del Slider (~220ms) para que el thread quede libre.
+// Escala bien con más jugadores: el costo de render es siempre el mismo.
+function PlayerDetailSkeleton({ player }: { player: Player }) {
+  return (
+    <div
+      className="relative overflow-hidden"
+      style={{
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(13,17,23,0.97)",
+        minHeight: 200,
+      }}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.14) 0%, rgba(245,185,66,0.04) 40%, transparent 68%)" }}
+      />
+      <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+        <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Ficha de Inteligencia Deportiva</span>
+        <span className="text-[9px] font-mono text-slate-700">REF-{player.id.toUpperCase().slice(0, 8)}</span>
+      </div>
+      <div className="flex">
+        <div className="flex-shrink-0 bg-white/5" style={{ width: 120, height: 180, borderRadius: 10 }} />
+        <div className="flex-1 p-4 space-y-3 min-w-0">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <FlagImg code={player.flagCode} className="w-7 h-[17px] rounded-[2px]" />
+              <span className={`text-[9px] uppercase tracking-widest truncate ${LABEL_CLASS}`}>{player.country} · #{player.number}</span>
+            </div>
+            <div className="text-2xl font-black text-white tracking-wider leading-tight">{toTitleCase(player.name)}</div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="text-4xl font-black text-white leading-none tabular-nums">{player.overall}</div>
+              <div className={`text-[8px] mt-1 uppercase ${LABEL_CLASS}`}>Índice global</div>
+            </div>
+            <div className="w-px h-10 bg-slate-800" />
+            <div>
+              <div className="text-xs font-black text-slate-300 tracking-wider uppercase">{POSITION_LABEL[player.position]}</div>
+              <div className="text-[9px] text-slate-600 font-mono mt-0.5">{player.era === "current" ? "Activo" : `Histórico · ${player.birthYear}`}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="px-4 pb-4 pt-2">
+        <motion.div
+          animate={{ opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="h-1 rounded-full bg-amber-400/20 w-full"
+        />
+      </div>
+    </div>
+  );
+}
+
 function PlayerDetail({
   player,
   onBack,
@@ -476,6 +533,17 @@ function PlayerDetail({
   const isMobile = useIsMobile();
   const [pizarraOpen, setPizarraOpen] = useState(false);
 
+  // PATCH: deferred render — misma lógica que TeamDetail.
+  // Skeleton durante la animación de apertura, contenido real después.
+  // Con más jugadores esto no se degrada: siempre se monta 1 skeleton liviano.
+  const [contentReady, setContentReady] = useState(!isMobile);
+  useEffect(() => {
+    if (!isMobile) return;
+    setContentReady(false);
+    const timer = setTimeout(() => setContentReady(true), 230);
+    return () => clearTimeout(timer);
+  }, [player.id, isMobile]);
+
   useEffect(() => {
     if (!isActive && pizarraOpen) setPizarraOpen(false);
   }, [isActive]);
@@ -483,8 +551,6 @@ function PlayerDetail({
   return (
     <>
       <motion.div
-        // PATCH: en mobile animación mínima — la entrada ya la maneja el Slider.
-        // En desktop mantener la animación original con y: 12.
         initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 12 }}
         animate={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
         exit={isMobile ? { opacity: 0 } : { opacity: 0, y: -12 }}
@@ -497,14 +563,20 @@ function PlayerDetail({
         }}
       >
         {onBack && (
-          <button
-            onClick={onBack}
-            className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
-          >
+          <button onClick={onBack} className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors">
             ← Volver al vestuario
           </button>
         )}
 
+        {isMobile && !contentReady ? (
+          <PlayerDetailSkeleton player={player} />
+        ) : (
+          <motion.div
+            initial={isMobile ? { opacity: 0 } : false}
+            animate={isMobile ? { opacity: 1 } : undefined}
+            transition={isMobile ? { duration: 0.18 } : undefined}
+            className="space-y-4"
+          >
         <div
           className="relative overflow-hidden"
           style={{
@@ -738,6 +810,8 @@ function PlayerDetail({
             </motion.div>
           </div>
         </motion.button>
+          </motion.div>
+        )}
       </motion.div>
 
       {pizarraOpen && (
