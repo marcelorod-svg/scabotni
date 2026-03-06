@@ -533,16 +533,17 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
                 {/* Títulos cell */}
                 <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
                   {isChampion ? (
-                    <div className="flex items-center gap-0.5">
-                      <img src="/images/copa_mundial.png" alt="copa" style={{ width: 16, height: 16, objectFit: "contain", filter: "drop-shadow(0 0 4px rgba(245,185,66,0.7))" }} />
-                      <span className="text-lg font-black leading-none text-sca-gold" style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>
-                        {numTitulos}
-                      </span>
-                    </div>
+                    <span className="text-xl font-black leading-none text-sca-gold"
+                      style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>
+                      {numTitulos}
+                    </span>
                   ) : isRunnerUp ? (
-                    <span className="text-lg font-black leading-none" style={{ color: "#94a3b8" }}>🥈</span>
+                    <span className="text-xl font-black leading-none"
+                      style={{ color: "#94a3b8", textShadow: "0 0 8px rgba(148,163,184,0.4)" }}>
+                      {numTitulos}
+                    </span>
                   ) : (
-                    <span className="text-lg font-black leading-none text-white">—</span>
+                    <span className="text-xl font-black leading-none text-white">—</span>
                   )}
                   <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
                     {isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}
