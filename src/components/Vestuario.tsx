@@ -12,85 +12,47 @@ import {
 import PlayerImage from "@/components/PlayerImage";
 import { ScaBOTni_Slider } from "@/components/ScaBOTni_Slider";
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-
 function toTitleCase(str: string): string {
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return str.toLowerCase().split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
-// ─── CONSTANTS ────────────────────────────────────────────────────────────────
-
 const POSITION_LABEL: Record<string, string> = {
-  GK:  "Arquero",
-  DEF: "Defensor",
-  MID: "Mediocampista",
-  FWD: "Delantero",
+  GK: "Arquero", DEF: "Defensor", MID: "Mediocampista", FWD: "Delantero",
 };
 
 const STAT_LABELS: Array<{ key: keyof Player; label: string }> = [
-  { key: "pace",      label: "VEL" },
-  { key: "shooting",  label: "TIR" },
-  { key: "passing",   label: "PAS" },
-  { key: "dribbling", label: "DRI" },
-  { key: "defending", label: "MAR" },
-  { key: "physical",  label: "FIS" },
+  { key: "pace", label: "VEL" }, { key: "shooting", label: "TIR" },
+  { key: "passing", label: "PAS" }, { key: "dribbling", label: "DRI" },
+  { key: "defending", label: "MAR" }, { key: "physical", label: "FIS" },
 ];
 
 const LABEL_CLASS = "text-amber-400/80 font-mono tracking-wider";
 
-// ─── TYPEWRITER HOOK ──────────────────────────────────────────────────────────
-
 function useTypewriter(text: string, speed = 20, startDelay = 0) {
   const [displayed, setDisplayed] = useState("");
   const [done, setDone] = useState(false);
-
   useEffect(() => {
-    setDisplayed("");
-    setDone(false);
-    let i = 0;
+    setDisplayed(""); setDone(false); let i = 0;
     const start = setTimeout(() => {
       const interval = setInterval(() => {
-        i++;
-        setDisplayed(text.slice(0, i));
-        if (i >= text.length) {
-          clearInterval(interval);
-          setDone(true);
-        }
+        i++; setDisplayed(text.slice(0, i));
+        if (i >= text.length) { clearInterval(interval); setDone(true); }
       }, speed);
       return () => clearInterval(interval);
     }, startDelay);
     return () => clearTimeout(start);
   }, [text, speed, startDelay]);
-
   return { displayed, done };
 }
 
-// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
-
 function FlagImg({ code, className = "" }: { code: string; className?: string }) {
-  return (
-    <img
-      src={`https://flagcdn.com/w40/${code}.png`}
-      alt={code}
-      className={`object-cover ${className}`}
-      loading="lazy"
-    />
-  );
+  return <img src={`https://flagcdn.com/w40/${code}.png`} alt={code} className={`object-cover ${className}`} loading="lazy" />;
 }
 
 function StatBar({ value }: { value: number }) {
   return (
     <div className="h-[3px] w-full bg-slate-800 rounded-sm overflow-hidden mt-[3px]">
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="h-full bg-amber-400/50 rounded-sm"
-      />
+      <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} transition={{ duration: 0.55, ease: "easeOut" }} className="h-full bg-amber-400/50 rounded-sm" />
     </div>
   );
 }
@@ -98,28 +60,12 @@ function StatBar({ value }: { value: number }) {
 function ManagerAvatar({ manager, size = 40 }: { manager: ManagerDef; size?: number }) {
   const [failed, setFailed] = useState(false);
   return (
-    <div
-      className="flex-shrink-0 rounded-full overflow-hidden"
-      style={{
-        width: size, height: size,
-        border: "2px solid #f59e0b60",
-        boxShadow: "0 0 8px rgba(251,191,36,0.25)",
-      }}
-    >
+    <div className="flex-shrink-0 rounded-full overflow-hidden" style={{ width: size, height: size, border: "2px solid #f59e0b60", boxShadow: "0 0 8px rgba(251,191,36,0.25)" }}>
       {!failed ? (
-        <img
-          src={`/avatars/${manager.id}.png`}
-          alt={manager.name}
-          width={size} height={size}
-          className="w-full h-full object-cover object-top"
-          onError={() => setFailed(true)}
-          loading="lazy"
-        />
+        <img src={`/avatars/${manager.id}.png`} alt={manager.name} width={size} height={size} className="w-full h-full object-cover object-top" onError={() => setFailed(true)} loading="lazy" />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-slate-900">
-          <span className="text-[10px] font-black font-mono text-amber-400 tracking-wider">
-            {manager.initials}
-          </span>
+          <span className="text-[10px] font-black font-mono text-amber-400 tracking-wider">{manager.initials}</span>
         </div>
       )}
     </div>
@@ -128,12 +74,7 @@ function ManagerAvatar({ manager, size = 40 }: { manager: ManagerDef; size?: num
 
 function PitchLines() {
   return (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 400 300"
-      preserveAspectRatio="xMidYMid slice"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <rect x="20" y="15" width="360" height="270" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
       <line x1="200" y1="15" x2="200" y2="285" stroke="white" strokeWidth="0.6" opacity="0.07" />
       <circle cx="200" cy="150" r="45" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
@@ -152,31 +93,18 @@ function PitchLines() {
   );
 }
 
-function TypewriterBubble({
-  manager, comment, delay, isRight, isActive,
-}: {
-  manager: ManagerDef; comment: string; delay: number; isRight: boolean; isActive: boolean;
-}) {
+function TypewriterBubble({ manager, comment, delay, isRight, isActive }: { manager: ManagerDef; comment: string; delay: number; isRight: boolean; isActive: boolean }) {
   const { displayed, done } = useTypewriter(comment, 18, delay);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay / 1000, duration: 0.35, ease: "easeOut" }}
-      className={`flex items-start gap-3 ${isRight ? "flex-row-reverse" : "flex-row"}`}
-    >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: delay / 1000, duration: 0.35, ease: "easeOut" }} className={`flex items-start gap-3 ${isRight ? "flex-row-reverse" : "flex-row"}`}>
       <ManagerAvatar manager={manager} size={40} />
       <div className="flex-1 min-w-0">
         <div className={`flex items-baseline gap-2 mb-1.5 ${isRight ? "flex-row-reverse" : ""}`}>
-          <span className="text-[11px] font-bold text-amber-400 tracking-tight">
-            {toTitleCase(manager.name)}
-          </span>
+          <span className="text-[11px] font-bold text-amber-400 tracking-tight">{toTitleCase(manager.name)}</span>
           <span className="text-[9px] text-slate-500 font-mono truncate">{manager.role}</span>
         </div>
         <motion.div
-          animate={isActive && !done ? {
-            boxShadow: ["0 0 6px rgba(251,191,36,0.1)", "0 0 14px rgba(251,191,36,0.25)", "0 0 6px rgba(251,191,36,0.1)"],
-          } : { boxShadow: done ? "0 0 10px rgba(251,191,36,0.15)" : "none" }}
+          animate={isActive && !done ? { boxShadow: ["0 0 6px rgba(251,191,36,0.1)", "0 0 14px rgba(251,191,36,0.25)", "0 0 6px rgba(251,191,36,0.1)"] } : { boxShadow: done ? "0 0 10px rgba(251,191,36,0.15)" : "none" }}
           transition={{ duration: 1.8, repeat: isActive && !done ? Infinity : 0 }}
           className="relative rounded-xl border border-amber-500/30 overflow-hidden"
           style={{ background: "rgba(0,0,0,0.75)" }}
@@ -184,13 +112,7 @@ function TypewriterBubble({
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
           <p className="px-4 py-3 text-[12px] text-slate-200 leading-relaxed font-sans">
             "{displayed}
-            {!done && (
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-                className="inline-block w-[2px] h-3 bg-amber-400 ml-0.5 align-middle"
-              />
-            )}
+            {!done && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} className="inline-block w-[2px] h-3 bg-amber-400 ml-0.5 align-middle" />}
             {done && '"'}
           </p>
         </motion.div>
@@ -199,68 +121,26 @@ function TypewriterBubble({
   );
 }
 
-// ─── PLAYER CARD (list view) ──────────────────────────────────────────────────
-
-function PlayerCard({
-  player, onClick, cardRef,
-}: {
-  player: Player;
-  onClick: () => void;
-  cardRef: (el: HTMLButtonElement | null) => void;
-}) {
+function PlayerCard({ player, onClick, cardRef }: { player: Player; onClick: () => void; cardRef: (el: HTMLButtonElement | null) => void }) {
   return (
-    <motion.button
-      ref={cardRef}
-      whileHover={{ scale: 1.012 }}
-      whileTap={{ scale: 0.988 }}
-      onClick={onClick}
-      className="w-full text-left overflow-hidden transition-all relative"
-      style={{
-        borderRadius: 12,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(13,17,23,0.55)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
-      }}
-    >
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 70% 110% at 0% 50%, rgba(245,185,66,0.12) 0%, transparent 65%)",
-        borderRadius: 12,
-      }} />
-      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-        height: "45%",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
-        borderRadius: "12px 12px 0 0",
-      }} />
+    <motion.button ref={cardRef} whileHover={{ scale: 1.012 }} whileTap={{ scale: 0.988 }} onClick={onClick} className="w-full text-left overflow-hidden transition-all relative"
+      style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(13,17,23,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", boxShadow: "0 4px 20px rgba(0,0,0,0.35)" }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 110% at 0% 50%, rgba(245,185,66,0.12) 0%, transparent 65%)", borderRadius: 12 }} />
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "45%", background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)", borderRadius: "12px 12px 0 0" }} />
       <div className="relative flex">
         <div className="flex-shrink-0 relative overflow-hidden" style={{ width: 72, height: 96 }}>
-          <div className="absolute inset-0 z-10 pointer-events-none" style={{
-            background: "linear-gradient(135deg, #f5b94230 0%, #00d4aa15 50%, #f5b94230 100%)",
-            padding: "1px",
-          }} />
-          <PlayerImage
-            playerId={player.id}
-            name={player.name}
-            className="w-full h-full object-cover object-top"
-            style={{ width: 72, height: 96 }}
-          />
+          <div className="absolute inset-0 z-10 pointer-events-none" style={{ background: "linear-gradient(135deg, #f5b94230 0%, #00d4aa15 50%, #f5b94230 100%)", padding: "1px" }} />
+          <PlayerImage playerId={player.id} name={player.name} className="w-full h-full object-cover object-top" style={{ width: 72, height: 96 }} />
         </div>
         <div className="flex-1 px-3 py-2.5 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0">
-              <div className={`text-[9px] uppercase mb-0.5 ${LABEL_CLASS}`}>
-                {POSITION_LABEL[player.position]}
-              </div>
-              <div className="font-black text-white text-sm leading-tight tracking-wide truncate">
-                {toTitleCase(player.name)}
-              </div>
+              <div className={`text-[9px] uppercase mb-0.5 ${LABEL_CLASS}`}>{POSITION_LABEL[player.position]}</div>
+              <div className="font-black text-white text-sm leading-tight tracking-wide truncate">{toTitleCase(player.name)}</div>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <FlagImg code={player.flagCode} className="w-6 h-[15px] rounded-[2px]" />
-              <span className="text-xl font-black text-white leading-none tabular-nums">
-                {player.overall}
-              </span>
+              <span className="text-xl font-black text-white leading-none tabular-nums">{player.overall}</span>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-x-3">
@@ -268,21 +148,15 @@ function PlayerCard({
               <div key={label}>
                 <div className="flex justify-between items-baseline">
                   <span className={`text-[9px] ${LABEL_CLASS}`}>{label}</span>
-                  <span className="text-[10px] font-bold text-white tabular-nums">
-                    {player[key] as number}
-                  </span>
+                  <span className="text-[10px] font-bold text-white tabular-nums">{player[key] as number}</span>
                 </div>
                 <StatBar value={player[key] as number} />
               </div>
             ))}
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-[9px] text-slate-700 font-mono">
-              {player.era === "current" ? "Activo" : "Histórico"}
-            </span>
-            <span className="text-[9px] text-slate-600 font-mono">
-              MF · {player.wc_partidos} PJ · {player.wc_goles} G
-            </span>
+            <span className="text-[9px] text-slate-700 font-mono">{player.era === "current" ? "Activo" : "Histórico"}</span>
+            <span className="text-[9px] text-slate-600 font-mono">MF · {player.wc_partidos} PJ · {player.wc_goles} G</span>
           </div>
         </div>
       </div>
@@ -290,46 +164,26 @@ function PlayerCard({
   );
 }
 
-// ─── DEBATE PANEL ─────────────────────────────────────────────────────────────
-
 function DebatePanel({ playerId, refreshKey }: { playerId: string; refreshKey: number }) {
   const [panel, setPanel] = useState<Array<{ manager: ManagerDef; comment: string }>>([]);
-
   useEffect(() => {
     const count = Math.floor(Math.random() * 2) + 2;
     const managers = pickRandomManagers(count);
     setPanel(managers.map((m, i) => ({ manager: m, comment: getComment(m.id, playerId, i) })));
   }, [playerId, refreshKey]);
-
   return (
     <div className="space-y-5">
       {panel.map(({ manager, comment }, i) => (
-        <TypewriterBubble
-          key={`${manager.id}-${refreshKey}-${i}`}
-          manager={manager}
-          comment={comment}
-          delay={i * 950}
-          isRight={i % 2 !== 0}
-          isActive={true}
-        />
+        <TypewriterBubble key={`${manager.id}-${refreshKey}-${i}`} manager={manager} comment={comment} delay={i * 950} isRight={i % 2 !== 0} isActive={true} />
       ))}
     </div>
   );
 }
 
-// ─── PIZARRA TÁCTICA OVERLAY ──────────────────────────────────────────────────
-// Se abre como overlay sobre la ficha del jugador (que queda blureada atrás)
+// ─── PIZARRA OVERLAY ──────────────────────────────────────────────────────────
 
-function PizarraOverlay({
-  player,
-  onClose,
-}: {
-  player: Player;
-  onClose: () => void;
-}) {
+function PizarraOverlay({ player, onClose }: { player: Player; onClose: () => void }) {
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Cerrar con Escape
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", fn);
@@ -337,129 +191,65 @@ function PizarraOverlay({
   }, [onClose]);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="pizarra-overlay"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1100,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-        }}
-      >
-        {/* Backdrop — click cierra */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(5, 10, 18, 0.72)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-          }}
-        />
-
-        {/* Panel deslizante desde abajo */}
-        <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.9 }}
-          style={{
-            position: "relative",
-            zIndex: 1,
-            borderRadius: "20px 20px 0 0",
-            overflow: "hidden",
-            border: "1px solid rgba(255,255,255,0.10)",
-            borderBottom: "none",
-            boxShadow: "0 -8px 40px rgba(0,0,0,0.6), 0 0 1px rgba(251,191,36,0.2)",
-            maxHeight: "82vh",
-            overflowY: "auto",
-          }}
-        >
-          {/* Pitch background */}
-          <div
-            className="absolute inset-0"
-            style={{ background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)" }}
-          />
-          <div className="absolute inset-0" style={{ background: "rgba(5,14,10,0.35)" }} />
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)",
-          }} />
-          <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-            height: "30%",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
-          }} />
-          <PitchLines />
-
-          {/* Content */}
-          <div className="relative z-10">
-            {/* Handle drag indicator */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
+        style={{ position: "absolute", inset: 0, background: "rgba(5,10,18,0.72)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }} />
+      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.9 }}
+        style={{ position: "relative", zIndex: 1, borderRadius: "20px 20px 0 0", overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)", borderBottom: "none", boxShadow: "0 -8px 40px rgba(0,0,0,0.6)", maxHeight: "82vh", overflowY: "auto" }}>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "rgba(5,14,10,0.35)" }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)" }} />
+        <PitchLines />
+        <div className="relative z-10">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-white/20" />
+          </div>
+          <div className="border-b px-4 py-3 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}>
+            <div className="flex items-center gap-2">
+              <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-2 h-2 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d39980" }} />
+              <span className={`text-[10px] uppercase tracking-widest ${LABEL_CLASS}`}>Pizarra táctica · {toTitleCase(player.name)}</span>
             </div>
-
-            {/* Header */}
-            <div
-              className="border-b px-4 py-3 flex items-center justify-between"
-              style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}
-            >
-              <div className="flex items-center gap-2">
-                <motion.div
-                  animate={{ opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-2 h-2 rounded-full bg-emerald-400"
-                  style={{ boxShadow: "0 0 6px #34d39980" }}
-                />
-                <span className={`text-[10px] uppercase tracking-widest ${LABEL_CLASS}`}>
-                  Pizarra táctica · {toTitleCase(player.name)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setRefreshKey((k) => k + 1)}
-                  className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 hover:text-amber-400 transition-colors border border-slate-700/50 hover:border-amber-400/30 px-2.5 py-1 rounded-full"
-                >
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
-                    <path d="M13.7 2.3A7 7 0 1 0 15 8" strokeLinecap="round" />
-                    <path d="M11 2h3V5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Nuevo debate
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-slate-600 hover:text-amber-400 transition-colors text-xs px-1"
-                  aria-label="Cerrar pizarra"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Debate bubbles */}
-            <div className="px-4 pb-8 pt-4">
-              <DebatePanel playerId={player.id} refreshKey={refreshKey} />
+            <div className="flex items-center gap-2">
+              <button onClick={() => setRefreshKey((k) => k + 1)} className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 hover:text-amber-400 transition-colors border border-slate-700/50 hover:border-amber-400/30 px-2.5 py-1 rounded-full">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
+                  <path d="M13.7 2.3A7 7 0 1 0 15 8" strokeLinecap="round" />
+                  <path d="M11 2h3V5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Nuevo debate
+              </button>
+              <button onClick={onClose} className="text-slate-600 hover:text-amber-400 transition-colors text-xs px-1">✕</button>
             </div>
           </div>
-        </motion.div>
+          <div className="px-4 pb-8 pt-4">
+            <DebatePanel playerId={player.id} refreshKey={refreshKey} />
+          </div>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }
 
 // ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
-// Solo la ficha — sin pizarra táctica embebida
 
-function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void }) {
+function PlayerDetail({
+  player,
+  onBack,
+  isActive = true,
+}: {
+  player: Player;
+  onBack?: () => void;
+  isActive?: boolean;
+}) {
   const [pizarraOpen, setPizarraOpen] = useState(false);
+
+  // Cerrar pizarra automáticamente cuando se swipea a otra card
+  useEffect(() => {
+    if (!isActive && pizarraOpen) {
+      setPizarraOpen(false);
+    }
+  }, [isActive]);
 
   return (
     <>
@@ -468,7 +258,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void 
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
         className="space-y-4"
-        // Blur suave cuando la pizarra está abierta
         style={{
           filter: pizarraOpen ? "blur(2px)" : "none",
           transition: "filter 0.3s ease",
@@ -476,103 +265,55 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void 
         }}
       >
         {onBack && (
-          <button
-            onClick={onBack}
-            className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
-          >
+          <button onClick={onBack} className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors">
             ← Volver al vestuario
           </button>
         )}
 
-        {/* ── FICHA PRINCIPAL ─────────────────────────────────────── */}
-        <div className="relative overflow-hidden" style={{
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(13,17,23,0.58)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-        }}>
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)",
-          }} />
-          <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-            height: "30%",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
-            borderRadius: "16px 16px 0 0",
-          }} />
+        <div className="relative overflow-hidden" style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(13,17,23,0.58)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}>
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)" }} />
+          <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "30%", background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)", borderRadius: "16px 16px 0 0" }} />
 
-          <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between"
-            style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-            <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
-              Ficha de Inteligencia Deportiva
-            </span>
-            <span className="text-[9px] font-mono text-slate-700">
-              REF-{player.id.toUpperCase().slice(0, 8)}
-            </span>
+          <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Ficha de Inteligencia Deportiva</span>
+            <span className="text-[9px] font-mono text-slate-700">REF-{player.id.toUpperCase().slice(0, 8)}</span>
           </div>
 
           <div className="flex">
-            <div className="flex-shrink-0 relative overflow-hidden" style={{
-              width: 120, height: 180, borderRadius: 10,
-              boxShadow: "0 0 18px 4px rgba(245,185,66,0.22), 0 0 6px 1px rgba(245,185,66,0.12), 0 4px 16px rgba(0,0,0,0.6)",
-              border: "1px solid rgba(255,255,255,0.10)",
-            }}>
-              <PlayerImage
-                playerId={player.id}
-                name={player.name}
-                className="w-full h-full object-cover object-top"
-                style={{ width: 120, height: 180, borderRadius: 10 }}
-              />
+            <div className="flex-shrink-0 relative overflow-hidden" style={{ width: 120, height: 180, borderRadius: 10, boxShadow: "0 0 18px 4px rgba(245,185,66,0.22), 0 0 6px 1px rgba(245,185,66,0.12), 0 4px 16px rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.10)" }}>
+              <PlayerImage playerId={player.id} name={player.name} className="w-full h-full object-cover object-top" style={{ width: 120, height: 180, borderRadius: 10 }} />
             </div>
             <div className="flex-1 p-4 space-y-3 min-w-0">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <FlagImg code={player.flagCode} className="w-7 h-[17px] rounded-[2px]" />
-                  <span className={`text-[9px] uppercase tracking-widest truncate ${LABEL_CLASS}`}>
-                    {player.country} · #{player.number}
-                  </span>
+                  <span className={`text-[9px] uppercase tracking-widest truncate ${LABEL_CLASS}`}>{player.country} · #{player.number}</span>
                 </div>
-                <div className="text-2xl font-black text-white tracking-wider leading-tight">
-                  {toTitleCase(player.name)}
-                </div>
-                <div className="text-[10px] text-slate-600 mt-0.5 font-mono truncate">
-                  {player.fullName}
-                </div>
+                <div className="text-2xl font-black text-white tracking-wider leading-tight">{toTitleCase(player.name)}</div>
+                <div className="text-[10px] text-slate-600 mt-0.5 font-mono truncate">{player.fullName}</div>
               </div>
               <div className="flex items-center gap-3">
                 <div>
-                  <div className="text-4xl font-black text-white leading-none tabular-nums">
-                    {player.overall}
-                  </div>
+                  <div className="text-4xl font-black text-white leading-none tabular-nums">{player.overall}</div>
                   <div className={`text-[8px] mt-1 uppercase ${LABEL_CLASS}`}>Índice global</div>
                 </div>
                 <div className="w-px h-10 bg-slate-800" />
                 <div>
-                  <div className="text-xs font-black text-slate-300 tracking-wider uppercase">
-                    {POSITION_LABEL[player.position]}
-                  </div>
-                  <div className="text-[9px] text-slate-600 font-mono mt-0.5">
-                    {player.era === "current" ? "Activo" : `Histórico · ${player.birthYear}`}
-                  </div>
+                  <div className="text-xs font-black text-slate-300 tracking-wider uppercase">{POSITION_LABEL[player.position]}</div>
+                  <div className="text-[9px] text-slate-600 font-mono mt-0.5">{player.era === "current" ? "Activo" : `Histórico · ${player.birthYear}`}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Indicadores */}
           <div className="border-t border-slate-800 px-4 pt-3 pb-4">
-            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
-              Indicadores de rendimiento
-            </div>
+            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>Indicadores de rendimiento</div>
             <div className="grid grid-cols-3 gap-x-5 gap-y-3">
               {STAT_LABELS.map(({ key, label }) => (
                 <div key={label}>
                   <div className="flex items-baseline justify-between">
                     <span className={`text-[10px] ${LABEL_CLASS}`}>{label}</span>
-                    <span className="text-lg font-black text-white tabular-nums leading-none">
-                      {player[key] as number}
-                    </span>
+                    <span className="text-lg font-black text-white tabular-nums leading-none">{player[key] as number}</span>
                   </div>
                   <StatBar value={player[key] as number} />
                 </div>
@@ -580,20 +321,17 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void 
             </div>
           </div>
 
-          {/* WC record */}
           <div className="relative px-4 pt-3 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
-            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
-              Historial Copa del Mundo
-            </div>
+            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>Historial Copa del Mundo</div>
             {(() => {
               const titulosStr = player.wc_titulos ?? "—";
               const numTitulos = parseInt(titulosStr) || 0;
               const isChampion = titulosStr.includes("Campeón");
               const isRunnerUp = titulosStr.includes("Subcampeón");
               const stats = [
-                { label: "Part.",  value: String(player.wc_participaciones) },
-                { label: "PJ",     value: String(player.wc_partidos) },
-                { label: "Goles",  value: String(player.wc_goles) },
+                { label: "Part.", value: String(player.wc_participaciones) },
+                { label: "PJ", value: String(player.wc_partidos) },
+                { label: "Goles", value: String(player.wc_goles) },
               ];
               return (
                 <div className="grid grid-cols-4 gap-1">
@@ -605,17 +343,13 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void 
                   ))}
                   <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
                     {isChampion ? (
-                      <span className="text-xl font-black leading-none text-sca-gold"
-                        style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>{numTitulos}</span>
+                      <span className="text-xl font-black leading-none text-sca-gold" style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>{numTitulos}</span>
                     ) : isRunnerUp ? (
-                      <span className="text-xl font-black leading-none"
-                        style={{ color: "#94a3b8", textShadow: "0 0 8px rgba(148,163,184,0.4)" }}>{numTitulos}</span>
+                      <span className="text-xl font-black leading-none" style={{ color: "#94a3b8", textShadow: "0 0 8px rgba(148,163,184,0.4)" }}>{numTitulos}</span>
                     ) : (
                       <span className="text-xl font-black leading-none text-white">—</span>
                     )}
-                    <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
-                      {isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}
-                    </span>
+                    <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>{isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}</span>
                   </div>
                 </div>
               );
@@ -623,68 +357,32 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void 
           </div>
         </div>
 
-        {/* ── BANNER PIZARRA TÁCTICA ───────────────────────────────── */}
+        {/* Banner pizarra táctica */}
         <motion.button
-          whileHover={{ scale: 1.012 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.012 }} whileTap={{ scale: 0.97 }}
           onClick={() => setPizarraOpen(true)}
           className="w-full relative overflow-hidden"
-          style={{
-            borderRadius: 12,
-            border: "1px solid rgba(251,191,36,0.22)",
-            background: "rgba(5,14,10,0.7)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            boxShadow: "0 0 20px rgba(251,191,36,0.08), 0 4px 20px rgba(0,0,0,0.4)",
-          }}
+          style={{ borderRadius: 12, border: "1px solid rgba(251,191,36,0.22)", background: "rgba(5,14,10,0.7)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", boxShadow: "0 0 20px rgba(251,191,36,0.08), 0 4px 20px rgba(0,0,0,0.4)" }}
         >
-          {/* Mini pitch lines en el fondo */}
           <div className="absolute inset-0 opacity-30 pointer-events-none overflow-hidden" style={{ borderRadius: 12 }}>
             <PitchLines />
           </div>
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 80% 120% at 0% 50%, rgba(251,191,36,0.07) 0%, transparent 65%)",
-          }} />
-
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 80% 120% at 0% 50%, rgba(251,191,36,0.07) 0%, transparent 65%)" }} />
           <div className="relative flex items-center gap-4 px-4 py-4">
-            {/* Pulsing dot */}
-            <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(251,191,36,0.3)" }}>
-              <motion.div
-                animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-2.5 h-2.5 rounded-full bg-emerald-400"
-                style={{ boxShadow: "0 0 8px #34d399" }}
-              />
+            <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(251,191,36,0.3)" }}>
+              <motion.div animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-2.5 h-2.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 8px #34d399" }} />
             </div>
-
             <div className="flex-1 text-left min-w-0">
-              <div className={`text-[10px] uppercase tracking-widest font-bold ${LABEL_CLASS}`}>
-                Análisis técnico en vivo
-              </div>
-              <div className="text-[11px] text-white/70 font-mono mt-0.5">
-                Desplegar comentarios de los DTs
-              </div>
+              <div className={`text-[10px] uppercase tracking-widest font-bold ${LABEL_CLASS}`}>Análisis técnico en vivo</div>
+              <div className="text-[11px] text-white/70 font-mono mt-0.5">Desplegar comentarios de los DTs</div>
             </div>
-
-            {/* Arrow */}
-            <motion.div
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-              className="flex-shrink-0 text-amber-400/60 text-lg"
-            >
-              ↑
-            </motion.div>
+            <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }} className="flex-shrink-0 text-amber-400/60 text-lg">↑</motion.div>
           </div>
         </motion.button>
       </motion.div>
 
-      {/* ── PIZARRA OVERLAY (portal-like, fuera del blur) ─────────── */}
       {pizarraOpen && (
-        <PizarraOverlay
-          player={player}
-          onClose={() => setPizarraOpen(false)}
-        />
+        <PizarraOverlay player={player} onClose={() => setPizarraOpen(false)} />
       )}
     </>
   );
@@ -696,8 +394,6 @@ export default function Vestuario() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [era, setEra] = useState<"all" | "current" | "historic">("all");
   const [position, setPosition] = useState<"all" | "GK" | "DEF" | "MID" | "FWD">("all");
-
-  // ── Slider state ──────────────────────────────────────────────
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [originRect, setOriginRect] = useState<DOMRect | null>(null);
@@ -709,113 +405,62 @@ export default function Vestuario() {
     return true;
   });
 
-  useEffect(() => {
-    cardRefs.current = cardRefs.current.slice(0, filtered.length);
-  }, [filtered.length]);
+  useEffect(() => { cardRefs.current = cardRefs.current.slice(0, filtered.length); }, [filtered.length]);
 
   function openSlider(index: number) {
     const rect = cardRefs.current[index]?.getBoundingClientRect() ?? null;
-    setOriginRect(rect);
-    setSliderIndex(index);
-    setSliderOpen(true);
+    setOriginRect(rect); setSliderIndex(index); setSliderOpen(true);
   }
 
   return (
     <div className="space-y-4">
       <AnimatePresence mode="wait">
         {selectedPlayer ? (
-          <PlayerDetail
-            key="detail"
-            player={selectedPlayer}
-            onBack={() => setSelectedPlayer(null)}
-          />
+          <PlayerDetail key="detail" player={selectedPlayer} onBack={() => setSelectedPlayer(null)} />
         ) : (
-          <motion.div
-            key="grid"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-4"
-          >
+          <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
             <div className="border-b border-slate-800 pb-3">
-              <div className={`text-[9px] uppercase tracking-widest mb-1 ${LABEL_CLASS}`}>
-                Sistema de Información Deportiva
-              </div>
+              <div className={`text-[9px] uppercase tracking-widest mb-1 ${LABEL_CLASS}`}>Sistema de Información Deportiva</div>
               <h2 className="text-xl font-black text-white tracking-wider">Vestuario</h2>
-              <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-                Fichas técnicas · Figuras históricas y actuales
-              </p>
+              <p className="text-[11px] font-mono text-slate-500 mt-0.5">Fichas técnicas · Figuras históricas y actuales</p>
             </div>
-
             <div className="space-y-1.5">
               <div className="flex gap-1.5">
                 {(["all", "current", "historic"] as const).map((e) => (
-                  <button
-                    key={e}
-                    onClick={() => setEra(e)}
-                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${
-                      era === e
-                        ? "bg-amber-400/10 text-amber-400 border-amber-400/40"
-                        : "border-slate-800 text-slate-600 hover:text-slate-400"
-                    }`}
-                  >
+                  <button key={e} onClick={() => setEra(e)} className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${era === e ? "bg-amber-400/10 text-amber-400 border-amber-400/40" : "border-slate-800 text-slate-600 hover:text-slate-400"}`}>
                     {e === "all" ? "Todos" : e === "current" ? "Activos" : "Históricos"}
                   </button>
                 ))}
               </div>
               <div className="flex gap-1.5">
                 {(["all", "GK", "DEF", "MID", "FWD"] as const).map((pos) => (
-                  <button
-                    key={pos}
-                    onClick={() => setPosition(pos)}
-                    className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${
-                      position === pos
-                        ? "bg-amber-400/10 text-amber-400 border-amber-400/40"
-                        : "border-slate-800 text-slate-600 hover:text-slate-400"
-                    }`}
-                  >
+                  <button key={pos} onClick={() => setPosition(pos)} className={`flex-1 text-[9px] font-mono font-bold py-1.5 tracking-widest uppercase border rounded-[2px] transition-colors ${position === pos ? "bg-amber-400/10 text-amber-400 border-amber-400/40" : "border-slate-800 text-slate-600 hover:text-slate-400"}`}>
                     {pos === "all" ? "Pos" : pos}
                   </button>
                 ))}
               </div>
             </div>
-
-            <div className="text-[9px] font-mono text-slate-700 tracking-widest uppercase">
-              {filtered.length} fichas encontradas
-            </div>
-
+            <div className="text-[9px] font-mono text-slate-700 tracking-widest uppercase">{filtered.length} fichas encontradas</div>
             <div className="space-y-2">
               {filtered.map((player, index) => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  cardRef={(el) => { cardRefs.current[index] = el; }}
-                  onClick={() => openSlider(index)}
-                />
+                <PlayerCard key={player.id} player={player} cardRef={(el) => { cardRefs.current[index] = el; }} onClick={() => openSlider(index)} />
               ))}
             </div>
-
             {filtered.length === 0 && (
-              <div className="py-12 text-center text-[10px] font-mono text-slate-700 uppercase tracking-widest">
-                Sin resultados para los filtros seleccionados
-              </div>
+              <div className="py-12 text-center text-[10px] font-mono text-slate-700 uppercase tracking-widest">Sin resultados para los filtros seleccionados</div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── SLIDER MODAL ───────────────────────────────────────────── */}
       <ScaBOTni_Slider
         items={filtered}
         initialIndex={sliderIndex}
         isOpen={sliderOpen}
-        onClose={() => {
-          setSliderOpen(false);
-          setOriginRect(null);
-        }}
-        renderCard={(player) => (
+        onClose={() => { setSliderOpen(false); setOriginRect(null); }}
+        renderCard={(player, isActive) => (
           <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
-            <PlayerDetail player={player as Player} />
+            <PlayerDetail player={player as Player} isActive={isActive} />
           </div>
         )}
         originRect={originRect}
