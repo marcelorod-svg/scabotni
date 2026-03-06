@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   players,
-  ALL_MANAGERS,
   pickRandomManagers,
   getComment,
   type Player,
@@ -26,7 +25,7 @@ function toTitleCase(str: string): string {
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 const POSITION_LABEL: Record<string, string> = {
-  GK: "Arquero",
+  GK:  "Arquero",
   DEF: "Defensor",
   MID: "Mediocampista",
   FWD: "Delantero",
@@ -96,23 +95,14 @@ function StatBar({ value }: { value: number }) {
   );
 }
 
-function ManagerAvatar({
-  manager,
-  size = 40,
-}: {
-  manager: ManagerDef;
-  size?: number;
-}) {
+function ManagerAvatar({ manager, size = 40 }: { manager: ManagerDef; size?: number }) {
   const [failed, setFailed] = useState(false);
-
   return (
     <div
       className="flex-shrink-0 rounded-full overflow-hidden"
       style={{
-        width: size,
-        height: size,
-        border: "2px solid",
-        borderColor: "#f59e0b60",
+        width: size, height: size,
+        border: "2px solid #f59e0b60",
         boxShadow: "0 0 8px rgba(251,191,36,0.25)",
       }}
     >
@@ -120,8 +110,7 @@ function ManagerAvatar({
         <img
           src={`/avatars/${manager.id}.png`}
           alt={manager.name}
-          width={size}
-          height={size}
+          width={size} height={size}
           className="w-full h-full object-cover object-top"
           onError={() => setFailed(true)}
           loading="lazy"
@@ -164,20 +153,11 @@ function PitchLines() {
 }
 
 function TypewriterBubble({
-  manager,
-  comment,
-  delay,
-  isRight,
-  isActive,
+  manager, comment, delay, isRight, isActive,
 }: {
-  manager: ManagerDef;
-  comment: string;
-  delay: number;
-  isRight: boolean;
-  isActive: boolean;
+  manager: ManagerDef; comment: string; delay: number; isRight: boolean; isActive: boolean;
 }) {
   const { displayed, done } = useTypewriter(comment, 18, delay);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -195,14 +175,8 @@ function TypewriterBubble({
         </div>
         <motion.div
           animate={isActive && !done ? {
-            boxShadow: [
-              "0 0 6px rgba(251,191,36,0.1)",
-              "0 0 14px rgba(251,191,36,0.25)",
-              "0 0 6px rgba(251,191,36,0.1)",
-            ],
-          } : {
-            boxShadow: done ? "0 0 10px rgba(251,191,36,0.15)" : "none",
-          }}
+            boxShadow: ["0 0 6px rgba(251,191,36,0.1)", "0 0 14px rgba(251,191,36,0.25)", "0 0 6px rgba(251,191,36,0.1)"],
+          } : { boxShadow: done ? "0 0 10px rgba(251,191,36,0.15)" : "none" }}
           transition={{ duration: 1.8, repeat: isActive && !done ? Infinity : 0 }}
           className="relative rounded-xl border border-amber-500/30 overflow-hidden"
           style={{ background: "rgba(0,0,0,0.75)" }}
@@ -228,9 +202,7 @@ function TypewriterBubble({
 // ─── PLAYER CARD (list view) ──────────────────────────────────────────────────
 
 function PlayerCard({
-  player,
-  onClick,
-  cardRef,
+  player, onClick, cardRef,
 }: {
   player: Player;
   onClick: () => void;
@@ -262,17 +234,11 @@ function PlayerCard({
         borderRadius: "12px 12px 0 0",
       }} />
       <div className="relative flex">
-        <div
-          className="flex-shrink-0 relative overflow-hidden"
-          style={{ width: 72, height: 96 }}
-        >
-          <div
-            className="absolute inset-0 z-10 pointer-events-none"
-            style={{
-              background: "linear-gradient(135deg, #f5b94230 0%, #00d4aa15 50%, #f5b94230 100%)",
-              padding: "1px",
-            }}
-          />
+        <div className="flex-shrink-0 relative overflow-hidden" style={{ width: 72, height: 96 }}>
+          <div className="absolute inset-0 z-10 pointer-events-none" style={{
+            background: "linear-gradient(135deg, #f5b94230 0%, #00d4aa15 50%, #f5b94230 100%)",
+            padding: "1px",
+          }} />
           <PlayerImage
             playerId={player.id}
             name={player.name}
@@ -332,12 +298,7 @@ function DebatePanel({ playerId, refreshKey }: { playerId: string; refreshKey: n
   useEffect(() => {
     const count = Math.floor(Math.random() * 2) + 2;
     const managers = pickRandomManagers(count);
-    setPanel(
-      managers.map((m, i) => ({
-        manager: m,
-        comment: getComment(m.id, playerId, i),
-      }))
-    );
+    setPanel(managers.map((m, i) => ({ manager: m, comment: getComment(m.id, playerId, i) })));
   }, [playerId, refreshKey]);
 
   return (
@@ -356,238 +317,376 @@ function DebatePanel({ playerId, refreshKey }: { playerId: string; refreshKey: n
   );
 }
 
-// ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
+// ─── PIZARRA TÁCTICA OVERLAY ──────────────────────────────────────────────────
+// Se abre como overlay sobre la ficha del jugador (que queda blureada atrás)
 
-function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void }) {
+function PizarraOverlay({
+  player,
+  onClose,
+}: {
+  player: Player;
+  onClose: () => void;
+}) {
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Cerrar con Escape
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [onClose]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      className="space-y-4"
-    >
-      {/* onBack solo se muestra cuando viene del modo lista normal */}
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
-        >
-          ← Volver al vestuario
-        </button>
-      )}
-
-      {/* ── FICHA PRINCIPAL ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "rgba(13,17,23,0.58)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-      }}>
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)",
-        }} />
-        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-          height: "30%",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
-          borderRadius: "16px 16px 0 0",
-        }} />
-        <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between"
-          style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-          <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
-            Ficha de Inteligencia Deportiva
-          </span>
-          <span className="text-[9px] font-mono text-slate-700">
-            REF-{player.id.toUpperCase().slice(0, 8)}
-          </span>
-        </div>
-
-        <div className="flex">
-          <div
-            className="flex-shrink-0 relative overflow-hidden"
-            style={{
-              width: 120,
-              height: 180,
-              borderRadius: 10,
-              boxShadow: "0 0 18px 4px rgba(245,185,66,0.22), 0 0 6px 1px rgba(245,185,66,0.12), 0 4px 16px rgba(0,0,0,0.6)",
-              border: "1px solid rgba(255,255,255,0.10)",
-            }}
-          >
-            <PlayerImage
-              playerId={player.id}
-              name={player.name}
-              className="w-full h-full object-cover object-top"
-              style={{ width: 120, height: 180, borderRadius: 10 }}
-            />
-          </div>
-          <div className="flex-1 p-4 space-y-3 min-w-0">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <FlagImg code={player.flagCode} className="w-7 h-[17px] rounded-[2px]" />
-                <span className={`text-[9px] uppercase tracking-widest truncate ${LABEL_CLASS}`}>
-                  {player.country} · #{player.number}
-                </span>
-              </div>
-              <div className="text-2xl font-black text-white tracking-wider leading-tight">
-                {toTitleCase(player.name)}
-              </div>
-              <div className="text-[10px] text-slate-600 mt-0.5 font-mono truncate">
-                {player.fullName}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div>
-                <div className="text-4xl font-black text-white leading-none tabular-nums">
-                  {player.overall}
-                </div>
-                <div className={`text-[8px] mt-1 uppercase ${LABEL_CLASS}`}>
-                  Índice global
-                </div>
-              </div>
-              <div className="w-px h-10 bg-slate-800" />
-              <div>
-                <div className="text-xs font-black text-slate-300 tracking-wider uppercase">
-                  {POSITION_LABEL[player.position]}
-                </div>
-                <div className="text-[9px] text-slate-600 font-mono mt-0.5">
-                  {player.era === "current" ? "Activo" : `Histórico · ${player.birthYear}`}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-800 px-4 pt-3 pb-4">
-          <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
-            Indicadores de rendimiento
-          </div>
-          <div className="grid grid-cols-3 gap-x-5 gap-y-3">
-            {STAT_LABELS.map(({ key, label }) => (
-              <div key={label}>
-                <div className="flex items-baseline justify-between">
-                  <span className={`text-[10px] ${LABEL_CLASS}`}>{label}</span>
-                  <span className="text-lg font-black text-white tabular-nums leading-none">
-                    {player[key] as number}
-                  </span>
-                </div>
-                <StatBar value={player[key] as number} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative px-4 pt-3 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
-          <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
-            Historial Copa del Mundo
-          </div>
-          {(() => {
-            const titulosStr = player.wc_titulos ?? "—";
-            const numTitulos = parseInt(titulosStr) || 0;
-            const isChampion = titulosStr.includes("Campeón");
-            const isRunnerUp = titulosStr.includes("Subcampeón");
-            const stats = [
-              { label: "Part.", value: String(player.wc_participaciones), gold: false },
-              { label: "PJ", value: String(player.wc_partidos), gold: false },
-              { label: "Goles", value: String(player.wc_goles), gold: false },
-            ];
-            return (
-              <div className="grid grid-cols-4 gap-1">
-                {stats.map((s) => (
-                  <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
-                    <span className="text-lg font-black tabular-nums leading-none text-white">
-                      {s.value}
-                    </span>
-                    <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
-                  {isChampion ? (
-                    <span className="text-xl font-black leading-none text-sca-gold"
-                      style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>
-                      {numTitulos}
-                    </span>
-                  ) : isRunnerUp ? (
-                    <span className="text-xl font-black leading-none"
-                      style={{ color: "#94a3b8", textShadow: "0 0 8px rgba(148,163,184,0.4)" }}>
-                      {numTitulos}
-                    </span>
-                  ) : (
-                    <span className="text-xl font-black leading-none text-white">—</span>
-                  )}
-                  <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
-                    {isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      </div>
-
-      {/* ── PIZARRA TÁCTICA ─────────────────────────────────────────── */}
+    <AnimatePresence>
       <motion.div
-        className="rounded-xl overflow-hidden relative"
+        key="pizarra-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         style={{
-          border: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: "0 0 28px rgba(251,191,36,0.10), 0 8px 32px rgba(0,0,0,0.5), 0 0 1px rgba(251,191,36,0.25)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          position: "fixed",
+          inset: 0,
+          zIndex: 1100,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
         }}
       >
-        <div
-          className="absolute inset-0"
+        {/* Backdrop — click cierra */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
           style={{
-            background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)",
+            position: "absolute",
+            inset: 0,
+            background: "rgba(5, 10, 18, 0.72)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
           }}
         />
-        <div className="absolute inset-0" style={{ background: "rgba(5,14,10,0.35)" }} />
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)",
-        }} />
-        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-          height: "30%",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
-          borderRadius: "12px 12px 0 0",
-        }} />
-        <PitchLines />
-        <div className="relative z-10">
+
+        {/* Panel deslizante desde abajo */}
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.9 }}
+          style={{
+            position: "relative",
+            zIndex: 1,
+            borderRadius: "20px 20px 0 0",
+            overflow: "hidden",
+            border: "1px solid rgba(255,255,255,0.10)",
+            borderBottom: "none",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.6), 0 0 1px rgba(251,191,36,0.2)",
+            maxHeight: "82vh",
+            overflowY: "auto",
+          }}
+        >
+          {/* Pitch background */}
           <div
-            className="border-b border-amber-500/15 px-4 py-3 flex items-center justify-between"
-            style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}
-          >
-            <div className="flex items-center gap-2">
-              <motion.div
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-2 h-2 rounded-full bg-emerald-400"
-                style={{ boxShadow: "0 0 6px #34d39980" }}
-              />
-              <span className={`text-[10px] uppercase tracking-widest ${LABEL_CLASS}`}>
-                Pizarra táctica · Análisis técnico en vivo
-              </span>
+            className="absolute inset-0"
+            style={{ background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)" }}
+          />
+          <div className="absolute inset-0" style={{ background: "rgba(5,14,10,0.35)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)",
+          }} />
+          <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+            height: "30%",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
+          }} />
+          <PitchLines />
+
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Handle drag indicator */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
-            <button
-              onClick={() => setRefreshKey((k) => k + 1)}
-              className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 hover:text-amber-400 transition-colors border border-slate-700/50 hover:border-amber-400/30 px-2.5 py-1 rounded-full"
+
+            {/* Header */}
+            <div
+              className="border-b px-4 py-3 flex items-center justify-between"
+              style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}
             >
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
-                <path d="M13.7 2.3A7 7 0 1 0 15 8" strokeLinecap="round" />
-                <path d="M11 2h3V5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Nuevo debate
-            </button>
+              <div className="flex items-center gap-2">
+                <motion.div
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="w-2 h-2 rounded-full bg-emerald-400"
+                  style={{ boxShadow: "0 0 6px #34d39980" }}
+                />
+                <span className={`text-[10px] uppercase tracking-widest ${LABEL_CLASS}`}>
+                  Pizarra táctica · {toTitleCase(player.name)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                  className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 hover:text-amber-400 transition-colors border border-slate-700/50 hover:border-amber-400/30 px-2.5 py-1 rounded-full"
+                >
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3 h-3">
+                    <path d="M13.7 2.3A7 7 0 1 0 15 8" strokeLinecap="round" />
+                    <path d="M11 2h3V5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Nuevo debate
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-slate-600 hover:text-amber-400 transition-colors text-xs px-1"
+                  aria-label="Cerrar pizarra"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Debate bubbles */}
+            <div className="px-4 pb-8 pt-4">
+              <DebatePanel playerId={player.id} refreshKey={refreshKey} />
+            </div>
           </div>
-          <div className="px-4 pb-5 pt-2">
-            <DebatePanel playerId={player.id} refreshKey={refreshKey} />
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
+// Solo la ficha — sin pizarra táctica embebida
+
+function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void }) {
+  const [pizarraOpen, setPizarraOpen] = useState(false);
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        className="space-y-4"
+        // Blur suave cuando la pizarra está abierta
+        style={{
+          filter: pizarraOpen ? "blur(2px)" : "none",
+          transition: "filter 0.3s ease",
+          pointerEvents: pizarraOpen ? "none" : "auto",
+        }}
+      >
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
+          >
+            ← Volver al vestuario
+          </button>
+        )}
+
+        {/* ── FICHA PRINCIPAL ─────────────────────────────────────── */}
+        <div className="relative overflow-hidden" style={{
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(13,17,23,0.58)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+        }}>
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)",
+          }} />
+          <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+            height: "30%",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+            borderRadius: "16px 16px 0 0",
+          }} />
+
+          <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between"
+            style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
+              Ficha de Inteligencia Deportiva
+            </span>
+            <span className="text-[9px] font-mono text-slate-700">
+              REF-{player.id.toUpperCase().slice(0, 8)}
+            </span>
+          </div>
+
+          <div className="flex">
+            <div className="flex-shrink-0 relative overflow-hidden" style={{
+              width: 120, height: 180, borderRadius: 10,
+              boxShadow: "0 0 18px 4px rgba(245,185,66,0.22), 0 0 6px 1px rgba(245,185,66,0.12), 0 4px 16px rgba(0,0,0,0.6)",
+              border: "1px solid rgba(255,255,255,0.10)",
+            }}>
+              <PlayerImage
+                playerId={player.id}
+                name={player.name}
+                className="w-full h-full object-cover object-top"
+                style={{ width: 120, height: 180, borderRadius: 10 }}
+              />
+            </div>
+            <div className="flex-1 p-4 space-y-3 min-w-0">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <FlagImg code={player.flagCode} className="w-7 h-[17px] rounded-[2px]" />
+                  <span className={`text-[9px] uppercase tracking-widest truncate ${LABEL_CLASS}`}>
+                    {player.country} · #{player.number}
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-white tracking-wider leading-tight">
+                  {toTitleCase(player.name)}
+                </div>
+                <div className="text-[10px] text-slate-600 mt-0.5 font-mono truncate">
+                  {player.fullName}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div>
+                  <div className="text-4xl font-black text-white leading-none tabular-nums">
+                    {player.overall}
+                  </div>
+                  <div className={`text-[8px] mt-1 uppercase ${LABEL_CLASS}`}>Índice global</div>
+                </div>
+                <div className="w-px h-10 bg-slate-800" />
+                <div>
+                  <div className="text-xs font-black text-slate-300 tracking-wider uppercase">
+                    {POSITION_LABEL[player.position]}
+                  </div>
+                  <div className="text-[9px] text-slate-600 font-mono mt-0.5">
+                    {player.era === "current" ? "Activo" : `Histórico · ${player.birthYear}`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Indicadores */}
+          <div className="border-t border-slate-800 px-4 pt-3 pb-4">
+            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
+              Indicadores de rendimiento
+            </div>
+            <div className="grid grid-cols-3 gap-x-5 gap-y-3">
+              {STAT_LABELS.map(({ key, label }) => (
+                <div key={label}>
+                  <div className="flex items-baseline justify-between">
+                    <span className={`text-[10px] ${LABEL_CLASS}`}>{label}</span>
+                    <span className="text-lg font-black text-white tabular-nums leading-none">
+                      {player[key] as number}
+                    </span>
+                  </div>
+                  <StatBar value={player[key] as number} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* WC record */}
+          <div className="relative px-4 pt-3 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
+            <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
+              Historial Copa del Mundo
+            </div>
+            {(() => {
+              const titulosStr = player.wc_titulos ?? "—";
+              const numTitulos = parseInt(titulosStr) || 0;
+              const isChampion = titulosStr.includes("Campeón");
+              const isRunnerUp = titulosStr.includes("Subcampeón");
+              const stats = [
+                { label: "Part.",  value: String(player.wc_participaciones) },
+                { label: "PJ",     value: String(player.wc_partidos) },
+                { label: "Goles",  value: String(player.wc_goles) },
+              ];
+              return (
+                <div className="grid grid-cols-4 gap-1">
+                  {stats.map((s) => (
+                    <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
+                      <span className="text-lg font-black tabular-nums leading-none text-white">{s.value}</span>
+                      <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>{s.label}</span>
+                    </div>
+                  ))}
+                  <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
+                    {isChampion ? (
+                      <span className="text-xl font-black leading-none text-sca-gold"
+                        style={{ textShadow: "0 0 10px rgba(245,185,66,0.5)" }}>{numTitulos}</span>
+                    ) : isRunnerUp ? (
+                      <span className="text-xl font-black leading-none"
+                        style={{ color: "#94a3b8", textShadow: "0 0 8px rgba(148,163,184,0.4)" }}>{numTitulos}</span>
+                    ) : (
+                      <span className="text-xl font-black leading-none text-white">—</span>
+                    )}
+                    <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
+                      {isChampion ? "Campeón" : isRunnerUp ? "Final" : "Títulos"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
+
+        {/* ── BANNER PIZARRA TÁCTICA ───────────────────────────────── */}
+        <motion.button
+          whileHover={{ scale: 1.012 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setPizarraOpen(true)}
+          className="w-full relative overflow-hidden"
+          style={{
+            borderRadius: 12,
+            border: "1px solid rgba(251,191,36,0.22)",
+            background: "rgba(5,14,10,0.7)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            boxShadow: "0 0 20px rgba(251,191,36,0.08), 0 4px 20px rgba(0,0,0,0.4)",
+          }}
+        >
+          {/* Mini pitch lines en el fondo */}
+          <div className="absolute inset-0 opacity-30 pointer-events-none overflow-hidden" style={{ borderRadius: 12 }}>
+            <PitchLines />
+          </div>
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(ellipse 80% 120% at 0% 50%, rgba(251,191,36,0.07) 0%, transparent 65%)",
+          }} />
+
+          <div className="relative flex items-center gap-4 px-4 py-4">
+            {/* Pulsing dot */}
+            <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(251,191,36,0.3)" }}>
+              <motion.div
+                animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2.5 h-2.5 rounded-full bg-emerald-400"
+                style={{ boxShadow: "0 0 8px #34d399" }}
+              />
+            </div>
+
+            <div className="flex-1 text-left min-w-0">
+              <div className={`text-[10px] uppercase tracking-widest font-bold ${LABEL_CLASS}`}>
+                Análisis técnico en vivo
+              </div>
+              <div className="text-[11px] text-white/70 font-mono mt-0.5">
+                Desplegar comentarios de los DTs
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <motion.div
+              animate={{ x: [0, 4, 0] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              className="flex-shrink-0 text-amber-400/60 text-lg"
+            >
+              ↑
+            </motion.div>
+          </div>
+        </motion.button>
       </motion.div>
-    </motion.div>
+
+      {/* ── PIZARRA OVERLAY (portal-like, fuera del blur) ─────────── */}
+      {pizarraOpen && (
+        <PizarraOverlay
+          player={player}
+          onClose={() => setPizarraOpen(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -598,7 +697,7 @@ export default function Vestuario() {
   const [era, setEra] = useState<"all" | "current" | "historic">("all");
   const [position, setPosition] = useState<"all" | "GK" | "DEF" | "MID" | "FWD">("all");
 
-  // ── Slider state ──────────────────────────────────────────────────
+  // ── Slider state ──────────────────────────────────────────────
   const [sliderOpen, setSliderOpen] = useState(false);
   const [sliderIndex, setSliderIndex] = useState(0);
   const [originRect, setOriginRect] = useState<DOMRect | null>(null);
@@ -610,7 +709,6 @@ export default function Vestuario() {
     return true;
   });
 
-  // Resetear refs cuando cambia el filtro
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, filtered.length);
   }, [filtered.length]);
@@ -706,7 +804,7 @@ export default function Vestuario() {
         )}
       </AnimatePresence>
 
-      {/* ── SLIDER MODAL ─────────────────────────────────────────────── */}
+      {/* ── SLIDER MODAL ───────────────────────────────────────────── */}
       <ScaBOTni_Slider
         items={filtered}
         initialIndex={sliderIndex}
