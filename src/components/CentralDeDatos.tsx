@@ -126,7 +126,7 @@ const TEAM_GRADIENTS: Record<string, [string, string, string]> = {
   south_africa: ["#22c55e","#facc15","#4ade80"], ghana: ["#facc15","#7f1d1d","#fef08a"],
   ivory_coast: ["#f97316","#16a34a","#fdba74"], tunisia: ["#dc2626","#1a1a1a","#fca5a5"],
   algeria: ["#f8fafc","#16a34a","#e2e8f0"], egypt: ["#dc2626","#1a1a1a","#fca5a5"],
-  cape_verde: ["#3b82f6","#16a34a","#93c5fd"], japan: ["#dc2626","#1a1a1a","#fca5a5"],
+  cape_verde: ["#3b82f6","#16a34a","#93c5fd"], japan: ["#1d4ed8","#0f172a","#93c5fd"],
   south_korea: ["#dc2626","#1e3a8a","#fca5a5"], iran: ["#16a34a","#dc2626","#4ade80"],
   australia: ["#facc15","#16a34a","#fef08a"], saudi_arabia: ["#16a34a","#1a1a1a","#4ade80"],
   qatar: ["#9f1239","#1a1a1a","#fda4af"], jordan: ["#dc2626","#15803d","#fca5a5"],
@@ -275,6 +275,63 @@ function TeamCard({
 
 // ─── TEAM DETAIL ──────────────────────────────────────────────────────────────
 
+// Skeleton liviano que se muestra mientras la animación de apertura está corriendo.
+// Solo texto y bandera — cero drop-shadows, cero gradientes complejos.
+function TeamDetailSkeleton({ team, g0 }: { team: TeamStats; g0: string }) {
+  return (
+    <div
+      className="relative overflow-hidden"
+      style={{
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(13,17,23,0.97)",
+        minHeight: 180,
+      }}
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${g0}40 0%, ${g0}18 45%, transparent 70%)` }}
+      />
+      <div className="relative px-4 pt-3 pb-2 border-b border-white/[0.07]">
+        <span className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase">
+          Ficha de Selección · Copa del Mundo 2026
+        </span>
+      </div>
+      <div className="relative flex items-center gap-4 px-4 py-5">
+        {/* Placeholder del crest — sin imagen ni drop-shadow */}
+        <div
+          className="flex-shrink-0 rounded-lg bg-white/5"
+          style={{ width: 76, height: 76 }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-2xl font-black text-white tracking-wide leading-tight">
+            {team.name}
+          </div>
+          <div className="text-[10px] mt-1 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
+            {team.confederation} · {team.participations} participaciones
+          </div>
+          {team.titles > 0 && (
+            <div className="flex items-center gap-0.5 mt-1.5">
+              {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+                <span key={i} className="text-sca-gold leading-none" style={{ fontSize: 13 }}>★</span>
+              ))}
+            </div>
+          )}
+        </div>
+        <FlagImg flagCode={team.flagCode} size="lg" />
+      </div>
+      {/* Indicador de carga sutil */}
+      <div className="px-4 pb-4 flex items-center gap-2">
+        <motion.div
+          animate={{ opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="h-1 rounded-full bg-amber-400/20 flex-1"
+        />
+      </div>
+    </div>
+  );
+}
+
 function TeamDetail({ team, onBack }: { team: TeamStats; onBack?: () => void }) {
   const isMobile = useIsMobile();
   const winRate = team.played > 0 ? ((team.won / team.played) * 100).toFixed(1) : "—";
@@ -282,9 +339,25 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack?: () => void }) 
   const isDebut = team.played === 0;
   const [g0] = getTeamGradient(team.id);
 
+  // PATCH: deferred render en mobile.
+  // Durante la animación de apertura del Slider (~220ms), el thread de render
+  // está ocupado calculando la animación. Si montamos todo el contenido pesado
+  // al mismo tiempo (TeamCrest con triple drop-shadow, stats grid, gradientes),
+  // competimos por el mismo thread y la animación se traba.
+  //
+  // Estrategia: mostrar el skeleton liviano inmediatamente, esperar a que
+  // la animación termine (~220ms) y recién entonces montar el contenido real.
+  // El usuario ve la card aparecer instantáneamente con nombre + bandera,
+  // y el contenido completo aparece 220ms después con un fade suave.
+  const [contentReady, setContentReady] = useState(!isMobile);
+  useEffect(() => {
+    if (!isMobile) return;
+    setContentReady(false);
+    const timer = setTimeout(() => setContentReady(true), 230);
+    return () => clearTimeout(timer);
+  }, [team.id, isMobile]);
+
   return (
-    // PATCH: en mobile sin animación de entrada (ya la hace el Slider).
-    // En desktop mantener la animación original.
     <motion.div
       initial={isMobile ? { opacity: 0 } : { opacity: 0, x: 16 }}
       animate={isMobile ? { opacity: 1 } : { opacity: 1, x: 0 }}
@@ -301,170 +374,131 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack?: () => void }) 
         </button>
       )}
 
-      <div
-        className="relative overflow-hidden"
-        style={{
-          borderRadius: 16,
-          border: "1px solid rgba(255,255,255,0.10)",
-          // PATCH: en mobile background sólido. Este componente se renderiza
-          // dentro del Slider que ya tiene su propio backdrop — no stackear blurs.
-          background: isMobile ? "rgba(13,17,23,0.97)" : "rgba(13,17,23,0.55)",
-          ...(isMobile ? {} : {
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-          }),
-        }}
-      >
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${g0}40 0%, ${g0}18 45%, transparent 70%)`,
-          }}
-        />
-        {!isMobile && (
-          <>
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: TEXTURE_SVG }} />
-            <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "35%", background: "linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%)" }} />
-          </>
-        )}
-
-        <div className="relative px-4 pt-3 pb-2 border-b border-white/[0.07]">
-          <span className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase">
-            Ficha de Selección · Copa del Mundo 2026
-          </span>
-        </div>
-
-        <div className="relative flex items-center gap-4 px-4 py-5 border-b border-white/[0.07]">
+      {/* En mobile: skeleton durante la animación, contenido real después */}
+      {isMobile && !contentReady ? (
+        <TeamDetailSkeleton team={team} g0={g0} />
+      ) : (
+        <motion.div
+          initial={isMobile ? { opacity: 0 } : false}
+          animate={isMobile ? { opacity: 1 } : undefined}
+          transition={isMobile ? { duration: 0.18 } : undefined}
+        >
           <div
-            className="flex-shrink-0"
+            className="relative overflow-hidden"
             style={{
-              filter: "drop-shadow(0 0 14px rgba(255,255,255,0.28)) drop-shadow(0 4px 10px rgba(0,0,0,0.7))",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.10)",
+              background: isMobile ? "rgba(13,17,23,0.97)" : "rgba(13,17,23,0.55)",
+              ...(isMobile ? {} : {
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+              }),
             }}
           >
-            <TeamCrest teamId={team.id} confederation={team.confederation} size={76} />
-          </div>
-          <div className="flex-1 min-w-0">
             <div
-              className="text-2xl font-black text-white tracking-wide leading-tight"
-              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
-            >
-              {team.name}
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${g0}40 0%, ${g0}18 45%, transparent 70%)` }}
+            />
+            {!isMobile && (
+              <>
+                <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: TEXTURE_SVG }} />
+                <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: "35%", background: "linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%)" }} />
+              </>
+            )}
+
+            <div className="relative px-4 pt-3 pb-2 border-b border-white/[0.07]">
+              <span className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase">
+                Ficha de Selección · Copa del Mundo 2026
+              </span>
             </div>
-            <div className="text-[10px] mt-1 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
-              {team.confederation} · {team.participations} participaciones
-            </div>
-            {team.titles > 0 && (
-              <div className="flex items-center gap-0.5 mt-1.5">
-                {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
-                  <span
-                    key={i}
-                    className="text-sca-gold leading-none"
-                    style={{ fontSize: 13, filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}
-                  >
-                    ★
-                  </span>
-                ))}
+
+            <div className="relative flex items-center gap-4 px-4 py-5 border-b border-white/[0.07]">
+              <div
+                className="flex-shrink-0"
+                style={{ filter: "drop-shadow(0 0 14px rgba(255,255,255,0.28)) drop-shadow(0 4px 10px rgba(0,0,0,0.7))" }}
+              >
+                <TeamCrest teamId={team.id} confederation={team.confederation} size={76} />
               </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-2xl font-black text-white tracking-wide leading-tight" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+                  {team.name}
+                </div>
+                <div className="text-[10px] mt-1 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  {team.confederation} · {team.participations} participaciones
+                </div>
+                {team.titles > 0 && (
+                  <div className="flex items-center gap-0.5 mt-1.5">
+                    {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+                      <span key={i} className="text-sca-gold leading-none" style={{ fontSize: 13, filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex-shrink-0 flex items-center">
+                <FlagImg flagCode={team.flagCode} size="lg" />
+              </div>
+            </div>
+
+            <div className="relative px-4 py-2.5 border-b border-white/[0.07] flex items-baseline gap-2">
+              <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest flex-shrink-0">Mejor posición:</span>
+              <span className="text-[11px] font-bold text-white leading-snug">{team.bestPosition}</span>
+            </div>
+
+            {isDebut ? (
+              <div className="relative px-4 py-5 text-center">
+                <div className="text-sca-accent font-bold text-sm">Primera participación en Copa del Mundo</div>
+                <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>Debuta en el Mundial 2026 · USA / México / Canadá</div>
+              </div>
+            ) : (
+              <>
+                <div className="relative px-4 pt-3 pb-4">
+                  <div className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase mb-3">Estadísticas Copa del Mundo</div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {[
+                      { label: "Partidos jugados",  value: team.played,       color: "" },
+                      { label: "Partidos ganados",  value: team.won,          color: "text-green-400" },
+                      { label: "Empates",           value: team.drawn,        color: "" },
+                      { label: "Derrotas",          value: team.lost,         color: "text-red-400" },
+                      { label: "Goles a favor",     value: team.goalsFor,     color: "text-sca-accent" },
+                      { label: "Goles en contra",   value: team.goalsAgainst, color: "" },
+                    ].map((s) => (
+                      <div key={s.label} className="flex justify-between items-center py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</span>
+                        <span className={`text-sm font-bold tabular-nums ${s.color || "text-white"}`}>{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="relative grid grid-cols-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  {[
+                    { label: "Rendimiento",   value: `${winRate}%`,  color: "text-sca-accent" },
+                    { label: "Goles / PJ",    value: goalAvg,        color: "text-amber-400" },
+                    { label: "Primera part.", value: team.firstYear, color: "text-slate-300" },
+                  ].map((k, i) => (
+                    <div key={k.label} className="flex flex-col items-center py-3 gap-1" style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+                      <span className={`text-lg font-black tabular-nums ${k.color}`}>{k.value}</span>
+                      <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.35)" }}>{k.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
-          <div className="flex-shrink-0 flex items-center">
-            <FlagImg flagCode={team.flagCode} size="lg" />
-          </div>
-        </div>
 
-        <div className="relative px-4 py-2.5 border-b border-white/[0.07] flex items-baseline gap-2">
-          <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest flex-shrink-0">
-            Mejor posición:
-          </span>
-          <span className="text-[11px] font-bold text-white leading-snug">{team.bestPosition}</span>
-        </div>
-
-        {isDebut ? (
-          <div className="relative px-4 py-5 text-center">
-            <div className="text-sca-accent font-bold text-sm">
-              Primera participación en Copa del Mundo
+          {/* PRAGMA Banner */}
+          <div className="rounded-sm border border-sca-accent/20 bg-gradient-to-r from-sca-accent/5 to-transparent p-4 flex items-center gap-3 mt-4">
+            <div className="w-8 h-8 rounded-sm bg-sca-accent/15 flex items-center justify-center flex-shrink-0">
+              <span className="text-sca-accent text-sm font-black">P</span>
             </div>
-            <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
-              Debuta en el Mundial 2026 · USA / México / Canadá
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold text-sca-accent">Análisis avanzado by PRAGMA Intelligence</div>
+              <div className="text-[9px] text-slate-600 mt-0.5">Modelos predictivos y estadísticas profundas para esta selección.</div>
             </div>
+            <span className="text-[9px] bg-sca-accent/10 text-sca-accent px-2 py-0.5 rounded-full font-bold flex-shrink-0">PRÓXIMAMENTE</span>
           </div>
-        ) : (
-          <>
-            <div className="relative px-4 pt-3 pb-4">
-              <div className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase mb-3">
-                Estadísticas Copa del Mundo
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                {[
-                  { label: "Partidos jugados",  value: team.played,       color: "" },
-                  { label: "Partidos ganados",  value: team.won,          color: "text-green-400" },
-                  { label: "Empates",           value: team.drawn,        color: "" },
-                  { label: "Derrotas",          value: team.lost,         color: "text-red-400" },
-                  { label: "Goles a favor",     value: team.goalsFor,     color: "text-sca-accent" },
-                  { label: "Goles en contra",   value: team.goalsAgainst, color: "" },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex justify-between items-center py-1.5"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                  >
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                      {s.label}
-                    </span>
-                    <span className={`text-sm font-bold tabular-nums ${s.color || "text-white"}`}>
-                      {s.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div
-              className="relative grid grid-cols-3"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
-            >
-              {[
-                { label: "Rendimiento",   value: `${winRate}%`,  color: "text-sca-accent" },
-                { label: "Goles / PJ",    value: goalAvg,        color: "text-amber-400" },
-                { label: "Primera part.", value: team.firstYear, color: "text-slate-300" },
-              ].map((k, i) => (
-                <div
-                  key={k.label}
-                  className="flex flex-col items-center py-3 gap-1"
-                  style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}
-                >
-                  <span className={`text-lg font-black tabular-nums ${k.color}`}>{k.value}</span>
-                  <span
-                    className="text-[8px] font-mono uppercase tracking-widest"
-                    style={{ color: "rgba(255,255,255,0.35)" }}
-                  >
-                    {k.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* PRAGMA Banner */}
-      <div className="rounded-sm border border-sca-accent/20 bg-gradient-to-r from-sca-accent/5 to-transparent p-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-sm bg-sca-accent/15 flex items-center justify-center flex-shrink-0">
-          <span className="text-sca-accent text-sm font-black">P</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-bold text-sca-accent">
-            Análisis avanzado by PRAGMA Intelligence
-          </div>
-          <div className="text-[9px] text-slate-600 mt-0.5">
-            Modelos predictivos y estadísticas profundas para esta selección.
-          </div>
-        </div>
-        <span className="text-[9px] bg-sca-accent/10 text-sca-accent px-2 py-0.5 rounded-full font-bold flex-shrink-0">
-          PRÓXIMAMENTE
-        </span>
-      </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
