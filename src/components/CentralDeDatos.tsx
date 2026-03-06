@@ -167,15 +167,13 @@ function TeamCard({
       style={{
         borderRadius: 12,
         border: "1px solid rgba(255,255,255,0.10)",
-        // PATCH: en mobile background sólido, sin backdropFilter.
-        // Con 48 cards en DOM, cada blur genera una capa de compositing.
-        // Resultado: scroll + tap fluidísimo.
-        background: isMobile ? "rgba(13, 17, 23, 0.94)" : "rgba(13, 17, 23, 0.55)",
-        ...(isMobile ? {} : {
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-        }),
+        // Glass suave en mobile: blur(6px) — mitad del costo de blur(10px).
+        // Solo en el listado estático. TeamDetail dentro del Slider sigue sólido.
+        // Sin textura SVG (capa extra innecesaria en mobile).
+        background: isMobile ? "rgba(13, 17, 23, 0.72)" : "rgba(13, 17, 23, 0.55)",
+        backdropFilter: isMobile ? "blur(6px)" : "blur(10px)",
+        WebkitBackdropFilter: isMobile ? "blur(6px)" : "blur(10px)",
+        boxShadow: isMobile ? "0 2px 16px rgba(0,0,0,0.3)" : "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
       <div
@@ -185,22 +183,23 @@ function TeamCard({
           borderRadius: 12,
         }}
       />
-      {/* PATCH: texture y highlight superior solo en desktop, son capas extra */}
+      {/* Highlight superior: en mobile versión suave, en desktop full */}
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-none"
+        style={{
+          height: "50%",
+          background: isMobile
+            ? "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)"
+            : "linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 100%)",
+          borderRadius: "12px 12px 0 0",
+        }}
+      />
+      {/* Textura SVG solo en desktop */}
       {!isMobile && (
-        <>
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.055]"
-            style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }}
-          />
-          <div
-            className="absolute inset-x-0 top-0 pointer-events-none"
-            style={{
-              height: "50%",
-              background: "linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 100%)",
-              borderRadius: "12px 12px 0 0",
-            }}
-          />
-        </>
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.055]"
+          style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }}
+        />
       )}
       <div className="relative flex items-center" style={{ minHeight: 80, padding: "0 16px 0 0" }}>
         <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 80, height: 80 }}>
