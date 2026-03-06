@@ -175,99 +175,86 @@ const TEXTURE_SVG = `url("data:image/svg+xml,%3Csvg width='40' height='40' viewB
 function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
   const winRate = team.played > 0 ? Math.round((team.won / team.played) * 100) : 0;
   const isDebut = team.played === 0;
-  const [from, to, glow] = getTeamGradient(team.id);
+  const [from, , glow] = getTeamGradient(team.id);
 
   return (
     <motion.button
       whileHover={{ scale: 1.018, y: -1 }}
       whileTap={{ scale: 0.982 }}
       onClick={onClick}
-      className="w-full text-left overflow-hidden"
+      className="w-full text-left overflow-hidden relative"
       style={{
         borderRadius: 12,
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)`,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(13, 17, 23, 0.55)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Card body — gradient background + texture */}
+      {/* Country color wash — radial from crest corner, fades to transparent */}
       <div
-        className="relative flex items-center"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-          backgroundImage: `${TEXTURE_SVG}, linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
-          minHeight: 80,
-          padding: "0 16px 0 0",
+          background: `radial-gradient(ellipse 80% 120% at 0% 50%, ${from}28 0%, transparent 70%)`,
+          borderRadius: 12,
         }}
-      >
-        {/* Glossy top sheen */}
-        <div
-          className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
-          style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)",
-            borderRadius: "12px 12px 0 0",
-          }}
-        />
+      />
 
-        {/* Crest — dominant, centered, with drop-shadow */}
-        <div
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{ width: 88, height: 80 }}
-        >
-          <TeamCrest
-            teamId={team.id}
-            confederation={team.confederation}
-            size={60}
-          />
+      {/* Texture overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }}
+      />
+
+      {/* Glossy top sheen */}
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-none"
+        style={{
+          height: "50%",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          borderRadius: "12px 12px 0 0",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative flex items-center" style={{ minHeight: 80, padding: "0 16px 0 0" }}>
+        {/* Crest — sticker effect */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 88, height: 80 }}>
+          <TeamCrest teamId={team.id} confederation={team.confederation} size={64} />
         </div>
 
-        {/* Right content */}
+        {/* Text */}
         <div className="flex-1 min-w-0 py-3">
-          {/* Name */}
-          <div
-            className="font-black text-white text-base leading-tight truncate"
-            style={{ textShadow: `0 1px 8px rgba(0,0,0,0.6)` }}
-          >
+          <div className="font-black text-white text-base leading-tight truncate"
+            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>
             {team.name}
           </div>
-
-          {/* Confederation + participations */}
-          <div
-            className="text-[10px] mt-0.5 font-medium"
-            style={{
-              color: "rgba(255,255,255,0.65)",
-              textShadow: "0 1px 4px rgba(0,0,0,0.5)",
-            }}
-          >
+          <div className="text-[10px] mt-0.5 font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
             {team.confederation} · {team.participations} part.
           </div>
 
-          {/* Stats or debut */}
           <div className="mt-2">
             {isDebut ? (
-              <span
-                className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                style={{
-                  background: "rgba(0,0,0,0.35)",
-                  color: "rgba(255,255,255,0.8)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-              >
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: "rgba(0,212,170,0.15)", color: "#00d4aa", border: "1px solid rgba(0,212,170,0.3)" }}>
                 DEBUT · WC 2026
               </span>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="flex gap-2 text-[10px]" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
-                  <span className="text-white font-bold">{team.played}<span className="font-normal opacity-60"> PJ</span></span>
-                  <span className="text-white font-bold">{team.won}<span className="font-normal opacity-60"> G</span></span>
-                  <span className="opacity-70 text-white">{team.drawn}E · {team.lost}P</span>
+                <div className="flex gap-2 text-[10px]">
+                  <span className="text-white font-bold">
+                    {team.played}<span style={{ opacity: 0.55 }} className="font-normal"> PJ</span>
+                  </span>
+                  <span className="text-white font-bold">
+                    {team.won}<span style={{ opacity: 0.55 }} className="font-normal"> G</span>
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {team.drawn}E · {team.lost}P
+                  </span>
                 </div>
-                <span
-                  className="ml-auto text-[11px] font-black"
-                  style={{
-                    color: "white",
-                    textShadow: `0 0 12px ${glow}, 0 1px 4px rgba(0,0,0,0.6)`,
-                  }}
-                >
+                <span className="ml-auto text-[11px] font-black text-white"
+                  style={{ textShadow: `0 0 10px ${glow}` }}>
                   {winRate}%
                 </span>
               </div>
@@ -275,16 +262,10 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
           </div>
         </div>
 
-        {/* Titles badge — top right */}
+        {/* Titles badge */}
         {team.titles > 0 && (
-          <div
-            className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
-            style={{
-              background: "rgba(0,0,0,0.40)",
-              border: "1px solid rgba(245,185,66,0.5)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
+          <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
+            style={{ background: "rgba(0,0,0,0.50)", border: "1px solid rgba(245,185,66,0.4)", backdropFilter: "blur(6px)" }}>
             <span className="text-sca-gold text-[10px]">★</span>
             <span className="text-sca-gold text-[9px] font-black">{team.titles}</span>
           </div>
@@ -318,37 +299,67 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
         ← Todas las selecciones
       </button>
 
-      {/* ── HEADER FICHA ─────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-700/50 bg-[#0d1117] overflow-hidden">
-        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2">
+      {/* ── HEADER FICHA — glassmorphism ─────────────────── */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          borderRadius: 16,
+          border: "1px solid rgba(255,255,255,0.10)",
+          background: "rgba(13,17,23,0.55)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+        }}
+      >
+        {/* Country color wash — large radial from top-left */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse 100% 160% at 0% 0%, ${getTeamGradient(team.id)[0]}22 0%, transparent 65%)`,
+          }}
+        />
+        {/* Texture */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          style={{ backgroundImage: TEXTURE_SVG }} />
+        {/* Gloss top sheen */}
+        <div className="absolute inset-x-0 top-0 pointer-events-none"
+          style={{ height: "35%", background: "linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%)" }} />
+
+        {/* Header label */}
+        <div className="relative px-4 pt-3 pb-2 border-b border-white/[0.07]">
           <span className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase">
             Ficha de Selección · Copa del Mundo 2026
           </span>
         </div>
 
-        {/* Identity block: shield + flag + name */}
-        <div className="flex items-center gap-4 px-4 py-4 border-b border-slate-800">
-          <TeamCrest teamId={team.id} confederation={team.confederation} size={52} />
+        {/* Identity: big crest + info */}
+        <div className="relative flex items-center gap-4 px-4 py-5 border-b border-white/[0.07]">
+          {/* Crest — large sticker */}
+          <div className="flex-shrink-0">
+            <TeamCrest teamId={team.id} confederation={team.confederation} size={72} />
+          </div>
           <div className="flex-1 min-w-0">
-            {/* Flag top, name below */}
             <FlagImg flagCode={team.flagCode} size="md" />
-            <div className="text-2xl font-black text-white tracking-wide mt-1.5 leading-tight">
+            <div className="text-2xl font-black text-white tracking-wide mt-1.5 leading-tight"
+              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
               {team.name}
             </div>
-            <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+            <div className="text-[10px] mt-0.5 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
               {team.confederation} · {team.participations} participaciones
             </div>
           </div>
+          {/* Titles or best position */}
           <div className="flex flex-col items-center gap-1 flex-shrink-0">
             {team.titles > 0 ? (
               <>
-                <div className="text-3xl font-black text-sca-gold">{team.titles}</div>
-                <div className="text-[9px] font-mono text-sca-gold/60 uppercase tracking-widest">
-                  Títulos
+                <div className="text-3xl font-black text-sca-gold"
+                  style={{ textShadow: "0 0 16px rgba(245,185,66,0.5)" }}>
+                  {team.titles}
                 </div>
+                <div className="text-[9px] font-mono text-sca-gold/60 uppercase tracking-widest">Títulos</div>
               </>
             ) : (
-              <div className="text-[9px] font-mono text-slate-700 uppercase tracking-wider text-center leading-tight max-w-[64px]">
+              <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider text-center leading-tight max-w-[64px]">
                 {team.bestPosition.split("(")[0].trim()}
               </div>
             )}
@@ -356,7 +367,7 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
         </div>
 
         {/* Best position */}
-        <div className="px-4 py-2.5 border-b border-slate-800 flex items-baseline gap-2">
+        <div className="relative px-4 py-2.5 border-b border-white/[0.07] flex items-baseline gap-2">
           <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest flex-shrink-0">
             Mejor posición:
           </span>
@@ -364,71 +375,67 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
         </div>
 
         {isDebut ? (
-          <div className="px-4 py-5 text-center">
+          <div className="relative px-4 py-5 text-center">
             <div className="text-sca-accent font-bold text-sm">Primera participación en Copa del Mundo</div>
-            <div className="text-slate-600 text-xs mt-1">Debuta en el Mundial 2026 · USA / México / Canadá</div>
+            <div className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+              Debuta en el Mundial 2026 · USA / México / Canadá
+            </div>
           </div>
         ) : (
           <>
             {/* Stats grid */}
-            <div className="px-4 pt-3 pb-4">
+            <div className="relative px-4 pt-3 pb-4">
               <div className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase mb-3">
                 Estadísticas Copa del Mundo
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                 {[
-                  { label: "Partidos jugados", value: team.played },
+                  { label: "Partidos jugados", value: team.played, color: "" },
                   { label: "Partidos ganados", value: team.won, color: "text-green-400" },
-                  { label: "Empates", value: team.drawn },
+                  { label: "Empates", value: team.drawn, color: "" },
                   { label: "Derrotas", value: team.lost, color: "text-red-400" },
                   { label: "Goles a favor", value: team.goalsFor, color: "text-sca-accent" },
-                  { label: "Goles en contra", value: team.goalsAgainst },
+                  { label: "Goles en contra", value: team.goalsAgainst, color: "" },
                 ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex justify-between items-center py-1 border-b border-slate-800/60"
-                  >
-                    <span className="text-[10px] text-slate-500">{s.label}</span>
-                    <span
-                      className={`text-sm font-bold tabular-nums ${
-                        (s as { color?: string }).color ?? "text-white"
-                      }`}
-                    >
-                      {s.value}
-                    </span>
+                  <div key={s.label}
+                    className="flex justify-between items-center py-1.5"
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</span>
+                    <span className={`text-sm font-bold tabular-nums ${s.color || "text-white"}`}>{s.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* KPIs row */}
-            <div className="grid grid-cols-3 divide-x divide-slate-800 border-t border-slate-800">
+            {/* KPIs */}
+            <div className="relative grid grid-cols-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
               {[
                 { label: "Rendimiento", value: `${winRate}%`, color: "text-sca-accent" },
                 { label: "Goles / PJ", value: goalAvg, color: "text-amber-400" },
                 { label: "Primera part.", value: team.firstYear, color: "text-slate-300" },
-              ].map((k) => (
-                <div key={k.label} className="flex flex-col items-center py-3 gap-1">
+              ].map((k, i) => (
+                <div key={k.label}
+                  className="flex flex-col items-center py-3 gap-1"
+                  style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
                   <span className={`text-lg font-black tabular-nums ${k.color}`}>{k.value}</span>
-                  <span className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">
-                    {k.label}
-                  </span>
+                  <span className="text-[8px] font-mono uppercase tracking-widest"
+                    style={{ color: "rgba(255,255,255,0.35)" }}>{k.label}</span>
                 </div>
               ))}
             </div>
 
             {/* Top rival */}
             {topRivalRecord && (
-              <div className="border-t border-slate-800 px-4 py-3 bg-slate-900/20">
+              <div className="relative px-4 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest mb-2">
                   Rival más frecuente
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-white">{topRivalRecord.opponent}</span>
                   <div className="flex gap-2 text-[10px]">
-                    <span className="text-slate-500">{topRivalRecord.played} PJ</span>
+                    <span style={{ color: "rgba(255,255,255,0.45)" }}>{topRivalRecord.played} PJ</span>
                     <span className="text-green-400 font-bold">{topRivalRecord.won}G</span>
-                    <span className="text-slate-500">{topRivalRecord.drawn}E</span>
+                    <span style={{ color: "rgba(255,255,255,0.45)" }}>{topRivalRecord.drawn}E</span>
                     <span className="text-red-400 font-bold">{topRivalRecord.lost}P</span>
                     <span className="text-sca-accent font-bold ml-1">
                       {topRivalRecord.goalsFor}–{topRivalRecord.goalsAgainst}
@@ -443,7 +450,7 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
 
       {/* ── H2H EXPANDIBLE ───────────────────────────────── */}
       {!isDebut && h2h && (
-        <div className="rounded-sm border border-slate-700/50 bg-[#0d1117] overflow-hidden">
+        <div className="overflow-hidden" style={{ borderRadius:12, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(13,17,23,0.55)", backdropFilter:"blur(10px)", WebkitBackdropFilter:"blur(10px)" }}>
           <button
             onClick={() => setShowH2H(!showH2H)}
             className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-900/40 transition-colors"
