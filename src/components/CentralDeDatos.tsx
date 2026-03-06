@@ -307,12 +307,14 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
           </div>
         </div>
 
-        {/* Titles badge */}
+        {/* Titles badge — copa icon + star count */}
         {team.titles > 0 && (
-          <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
-            style={{ background: "rgba(0,0,0,0.50)", border: "1px solid rgba(245,185,66,0.4)", backdropFilter: "blur(6px)" }}>
-            <span className="text-sca-gold text-[10px]">★</span>
-            <span className="text-sca-gold text-[9px] font-black">{team.titles}</span>
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+            style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(245,185,66,0.35)", backdropFilter: "blur(6px)" }}>
+            <img src="/images/copa_mundial.png" alt="copa" style={{ width: 12, height: 12, objectFit: "contain", filter: "drop-shadow(0 0 3px rgba(245,185,66,0.8))" }} />
+            {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+              <span key={i} className="text-sca-gold leading-none" style={{ fontSize: 9 }}>★</span>
+            ))}
           </div>
         )}
       </div>
@@ -396,28 +398,20 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
             </div>
             {/* Titles inline */}
             {team.titles > 0 && (
-              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
-                    <span key={i} className="text-sca-gold leading-none"
-                      style={{ fontSize: 13, filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
-                  ))}
-                </div>
-                <span className="text-[9px] font-mono text-sca-gold/60 leading-none" style={{ lineHeight: 1 }}>
-                  {team.titles === 1 ? "1 título" : `${team.titles} títulos`}
-                </span>
+              <div className="flex items-center gap-1 mt-1.5">
+                <img src="/images/copa_mundial.png" alt="copa"
+                  style={{ width: 15, height: 15, objectFit: "contain", filter: "drop-shadow(0 0 5px rgba(245,185,66,0.7))" }} />
+                {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+                  <span key={i} className="text-sca-gold leading-none"
+                    style={{ fontSize: 13, filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Flag — right side, prominent */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-2">
+          {/* Flag — right side, prominent, no text */}
+          <div className="flex-shrink-0 flex items-center">
             <FlagImg flagCode={team.flagCode} size="lg" />
-            {!team.titles && (
-              <div className="text-[9px] font-mono text-white/35 uppercase tracking-wider text-center leading-tight max-w-[64px]">
-                {team.bestPosition.split("(")[0].trim()}
-              </div>
-            )}
           </div>
         </div>
 
