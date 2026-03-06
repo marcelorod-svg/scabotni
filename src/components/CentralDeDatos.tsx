@@ -58,7 +58,11 @@ function TeamCrest({
       width={size}
       height={size}
       className="object-contain flex-shrink-0"
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        filter: `drop-shadow(0 3px 8px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.8))`,
+      }}
       onError={() => setFailed(true)}
       loading="lazy"
     />
@@ -106,71 +110,185 @@ function StatBar({ value, max }: { value: number; max: number }) {
   );
 }
 
+// ─── TEAM GRADIENTS — EA FC 26 style per country ────────────────────────────
+// Each entry: [from-color, to-color, text-shadow-color]
+const TEAM_GRADIENTS: Record<string, [string, string, string]> = {
+  // CONMEBOL
+  argentina:    ["#74b9e8", "#2563eb", "#60a5fa"],
+  brazil:       ["#22c55e", "#15803d", "#4ade80"],
+  uruguay:      ["#60a5fa", "#1e40af", "#93c5fd"],
+  colombia:     ["#fbbf24", "#d97706", "#fde68a"],
+  ecuador:      ["#facc15", "#a16207", "#fef08a"],
+  paraguay:     ["#ef4444", "#991b1b", "#fca5a5"],
+  // UEFA
+  germany:      ["#6b7280", "#374151", "#d1d5db"],
+  france:       ["#3b82f6", "#1d4ed8", "#93c5fd"],
+  spain:        ["#ef4444", "#b91c1c", "#fca5a5"],
+  england:      ["#e2e8f0", "#64748b", "#f1f5f9"],
+  netherlands:  ["#f97316", "#c2410c", "#fdba74"],
+  portugal:     ["#dc2626", "#991b1b", "#fca5a5"],
+  croatia:      ["#ef4444", "#7f1d1d", "#fca5a5"],
+  belgium:      ["#dc2626", "#1a1a1a", "#fca5a5"],
+  switzerland:  ["#dc2626", "#7f1d1d", "#fca5a5"],
+  austria:      ["#dc2626", "#7f1d1d", "#fca5a5"],
+  scotland:     ["#3b82f6", "#1e3a5f", "#93c5fd"],
+  norway:       ["#dc2626", "#1a1a1a", "#fca5a5"],
+  // CONCACAF
+  usa:          ["#3b82f6", "#7f1d1d", "#93c5fd"],
+  mexico:       ["#22c55e", "#166534", "#4ade80"],
+  canada:       ["#ef4444", "#7f1d1d", "#fca5a5"],
+  panama:       ["#ef4444", "#1e3a8a", "#fca5a5"],
+  curacao:      ["#f59e0b", "#1e3a8a", "#fde68a"],
+  haiti:        ["#1d4ed8", "#7f1d1d", "#93c5fd"],
+  // CAF
+  morocco:      ["#dc2626", "#14532d", "#fca5a5"],
+  senegal:      ["#16a34a", "#facc15", "#4ade80"],
+  south_africa: ["#22c55e", "#facc15", "#4ade80"],
+  ghana:        ["#facc15", "#7f1d1d", "#fef08a"],
+  ivory_coast:  ["#f97316", "#16a34a", "#fdba74"],
+  tunisia:      ["#dc2626", "#1a1a1a", "#fca5a5"],
+  algeria:      ["#f8fafc", "#16a34a", "#e2e8f0"],
+  egypt:        ["#dc2626", "#1a1a1a", "#fca5a5"],
+  cape_verde:   ["#3b82f6", "#16a34a", "#93c5fd"],
+  // AFC
+  japan:        ["#dc2626", "#1a1a1a", "#fca5a5"],
+  south_korea:  ["#dc2626", "#1e3a8a", "#fca5a5"],
+  iran:         ["#16a34a", "#dc2626", "#4ade80"],
+  australia:    ["#facc15", "#16a34a", "#fef08a"],
+  saudi_arabia:  ["#16a34a", "#1a1a1a", "#4ade80"],
+  qatar:        ["#9f1239", "#1a1a1a", "#fda4af"],
+  jordan:       ["#dc2626", "#15803d", "#fca5a5"],
+  uzbekistan:   ["#3b82f6", "#16a34a", "#93c5fd"],
+  // OFC
+  new_zealand:  ["#64748b", "#1e293b", "#cbd5e1"],
+};
+
+function getTeamGradient(teamId: string): [string, string, string] {
+  return TEAM_GRADIENTS[teamId] ?? ["#1e293b", "#0f172a", "#94a3b8"];
+}
+
+// Micro geometric texture as inline SVG data URI
+const TEXTURE_SVG = `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-width='0.4' opacity='0.08'%3E%3Cpolygon points='20,2 38,11 38,29 20,38 2,29 2,11'/%3E%3Cpolygon points='20,8 32,14 32,26 20,32 8,26 8,14'/%3E%3Cline x1='20' y1='2' x2='20' y2='38'/%3E%3Cline x1='2' y1='20' x2='38' y2='20'/%3E%3C/g%3E%3C/svg%3E")`;
+
 // ─── TEAM CARD (list) ─────────────────────────────────────────────────────────
 
 function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
   const winRate = team.played > 0 ? Math.round((team.won / team.played) * 100) : 0;
   const isDebut = team.played === 0;
+  const [from, to, glow] = getTeamGradient(team.id);
 
   return (
     <motion.button
-      whileHover={{ scale: 1.015 }}
-      whileTap={{ scale: 0.985 }}
+      whileHover={{ scale: 1.018, y: -1 }}
+      whileTap={{ scale: 0.982 }}
       onClick={onClick}
-      className="w-full text-left rounded-sm border border-slate-700/50 bg-[#0d1117] hover:border-sca-accent/30 transition-colors overflow-hidden"
+      className="w-full text-left overflow-hidden"
+      style={{
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: `0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)`,
+      }}
     >
-      <div className="h-[2px] bg-slate-800" />
-      <div className="flex items-stretch gap-0">
-        {/* Shield column */}
-        <div className="flex-shrink-0 w-14 flex items-center justify-center bg-slate-900/40 py-3">
-          <TeamCrest teamId={team.id} confederation={team.confederation} size={36} />
+      {/* Card body — gradient background + texture */}
+      <div
+        className="relative flex items-center"
+        style={{
+          background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
+          backgroundImage: `${TEXTURE_SVG}, linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
+          minHeight: 80,
+          padding: "0 16px 0 0",
+        }}
+      >
+        {/* Glossy top sheen */}
+        <div
+          className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)",
+            borderRadius: "12px 12px 0 0",
+          }}
+        />
+
+        {/* Crest — dominant, centered, with drop-shadow */}
+        <div
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{ width: 88, height: 80 }}
+        >
+          <TeamCrest
+            teamId={team.id}
+            confederation={team.confederation}
+            size={60}
+          />
         </div>
 
-        {/* Main content */}
-        <div className="flex-1 px-3 py-2.5 min-w-0">
-          {/* Top row: flag + name + debut/titles */}
-          <div className="flex items-center gap-2 mb-2">
-            <FlagImg flagCode={team.flagCode} size="sm" />
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-white text-sm leading-tight truncate">
-                {team.name}
-              </div>
-              <div className="text-[9px] text-slate-600 font-mono mt-0.5">
-                {team.confederation} · {team.participations} part.
-              </div>
-            </div>
-            {team.titles > 0 && (
-              <div className="flex gap-0.5 flex-shrink-0">
-                {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
-                  <span key={i} className="text-sca-gold text-xs">★</span>
-                ))}
-              </div>
-            )}
-            {isDebut && (
-              <span className="text-[8px] font-bold bg-sca-accent/10 text-sca-accent border border-sca-accent/30 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                DEBUT
-              </span>
-            )}
+        {/* Right content */}
+        <div className="flex-1 min-w-0 py-3">
+          {/* Name */}
+          <div
+            className="font-black text-white text-base leading-tight truncate"
+            style={{ textShadow: `0 1px 8px rgba(0,0,0,0.6)` }}
+          >
+            {team.name}
           </div>
 
-          {/* Stats row or debut message */}
-          {isDebut ? (
-            <div className="text-[10px] text-slate-700 italic">Sin historial en Copas del Mundo</div>
-          ) : (
-            <>
-              <div className="flex gap-3 text-[10px] text-slate-500 mb-1.5">
-                <span><span className="text-white font-bold">{team.played}</span> PJ</span>
-                <span><span className="text-green-400 font-bold">{team.won}</span> G</span>
-                <span><span className="text-slate-400 font-bold">{team.drawn}</span> E</span>
-                <span><span className="text-red-400 font-bold">{team.lost}</span> P</span>
-                <span className="ml-auto">
-                  <span className="text-sca-accent font-bold">{winRate}%</span>
+          {/* Confederation + participations */}
+          <div
+            className="text-[10px] mt-0.5 font-medium"
+            style={{
+              color: "rgba(255,255,255,0.65)",
+              textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            {team.confederation} · {team.participations} part.
+          </div>
+
+          {/* Stats or debut */}
+          <div className="mt-2">
+            {isDebut ? (
+              <span
+                className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  background: "rgba(0,0,0,0.35)",
+                  color: "rgba(255,255,255,0.8)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                DEBUT · WC 2026
+              </span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-2 text-[10px]" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
+                  <span className="text-white font-bold">{team.played}<span className="font-normal opacity-60"> PJ</span></span>
+                  <span className="text-white font-bold">{team.won}<span className="font-normal opacity-60"> G</span></span>
+                  <span className="opacity-70 text-white">{team.drawn}E · {team.lost}P</span>
+                </div>
+                <span
+                  className="ml-auto text-[11px] font-black"
+                  style={{
+                    color: "white",
+                    textShadow: `0 0 12px ${glow}, 0 1px 4px rgba(0,0,0,0.6)`,
+                  }}
+                >
+                  {winRate}%
                 </span>
               </div>
-              <StatBar value={team.won} max={team.played} />
-            </>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* Titles badge — top right */}
+        {team.titles > 0 && (
+          <div
+            className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
+            style={{
+              background: "rgba(0,0,0,0.40)",
+              border: "1px solid rgba(245,185,66,0.5)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <span className="text-sca-gold text-[10px]">★</span>
+            <span className="text-sca-gold text-[9px] font-black">{team.titles}</span>
+          </div>
+        )}
       </div>
     </motion.button>
   );
