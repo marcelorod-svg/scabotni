@@ -9,71 +9,63 @@ import {
   type TeamStats,
 } from "@/lib/worldCupData";
 
-// ─── CONFEDERATION SHIELDS (inline SVG paths) ─────────────────────────────────
-// Clean geometric monogram-style shields, no external assets needed
+// ─── TEAM CREST ───────────────────────────────────────────────────────────────
+// Loads from /public/images/crests/{teamId}.png (or .svg)
+// Falls back to confederation-colored SVG shield if image missing
 
-function ConfederationShield({
-  confederation,
-  size = 32,
-}: {
-  confederation: string;
-  size?: number;
-}) {
-  const configs: Record<
-    string,
-    { bg: string; text: string; abbr: string; accent: string }
-  > = {
-    CONMEBOL: { bg: "#1a2744", text: "#4a9eff", abbr: "CSB", accent: "#4a9eff" },
-    UEFA:     { bg: "#0d1f3c", text: "#00d4aa", abbr: "UEFA", accent: "#00d4aa" },
-    CONCACAF: { bg: "#1a1a2e", text: "#f5b942", abbr: "CCF", accent: "#f5b942" },
-    CAF:      { bg: "#1a2a1a", text: "#4caf50", abbr: "CAF", accent: "#4caf50" },
-    AFC:      { bg: "#1f1a2e", text: "#9c6fff", abbr: "AFC", accent: "#9c6fff" },
-    OFC:      { bg: "#1a2a2a", text: "#26c6da", abbr: "OFC", accent: "#26c6da" },
-  };
-  const c = configs[confederation] ?? { bg: "#1a1a1a", text: "#888", abbr: "?", accent: "#888" };
+const CONF_COLORS: Record<string, { bg: string; text: string; abbr: string; accent: string }> = {
+  CONMEBOL: { bg: "#0d1f44", text: "#60a5fa", abbr: "CON", accent: "#3b82f6" },
+  UEFA:     { bg: "#0a1a2e", text: "#34d399", abbr: "UEFA", accent: "#10b981" },
+  CONCACAF: { bg: "#1c1408", text: "#fbbf24", abbr: "CCA", accent: "#f59e0b" },
+  CAF:      { bg: "#0d1f0d", text: "#4ade80", abbr: "CAF", accent: "#22c55e" },
+  AFC:      { bg: "#1a0d2e", text: "#c084fc", abbr: "AFC", accent: "#a855f7" },
+  OFC:      { bg: "#081a1f", text: "#22d3ee", abbr: "OFC", accent: "#06b6d4" },
+};
+
+function FallbackShield({ confederation, size }: { confederation: string; size: number }) {
+  const c = CONF_COLORS[confederation] ?? { bg: "#1a1a1a", text: "#888", abbr: "?", accent: "#888" };
   const fontSize = size < 28 ? size * 0.28 : size * 0.24;
-
   return (
-    <svg
-      width={size}
-      height={size * 1.15}
-      viewBox="0 0 40 46"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Shield outline */}
-      <path
-        d="M20 2 L38 9 L38 24 C38 34 20 44 20 44 C20 44 2 34 2 24 L2 9 Z"
-        fill={c.bg}
-        stroke={c.accent}
-        strokeWidth="1.5"
-      />
-      {/* Inner accent line */}
-      <path
-        d="M20 5 L35 11 L35 24 C35 32 20 41 20 41 C20 41 5 32 5 24 L5 11 Z"
-        fill="none"
-        stroke={c.accent}
-        strokeWidth="0.5"
-        opacity="0.3"
-      />
-      {/* Text abbreviation */}
-      <text
-        x="20"
-        y="26"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={c.text}
-        fontSize={fontSize}
-        fontFamily="monospace"
-        fontWeight="900"
-        letterSpacing="-0.5"
-      >
+    <svg width={size} height={size * 1.15} viewBox="0 0 40 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 2 L38 9 L38 24 C38 34 20 44 20 44 C20 44 2 34 2 24 L2 9 Z" fill={c.bg} stroke={c.accent} strokeWidth="1.5" />
+      <path d="M20 5 L35 11 L35 24 C35 32 20 41 20 41 C20 41 5 32 5 24 L5 11 Z" fill="none" stroke={c.accent} strokeWidth="0.5" opacity="0.3" />
+      <text x="20" y="26" textAnchor="middle" dominantBaseline="middle" fill={c.text} fontSize={fontSize} fontFamily="monospace" fontWeight="900" letterSpacing="-0.5">
         {c.abbr}
       </text>
     </svg>
   );
 }
 
+function TeamCrest({
+  teamId,
+  confederation,
+  size = 36,
+}: {
+  teamId: string;
+  confederation: string;
+  size?: number;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <FallbackShield confederation={confederation} size={size} />;
+  }
+
+  return (
+    <img
+      src={`/images/crests/${teamId}.png`}
+      alt={teamId}
+      width={size}
+      height={size}
+      className="object-contain flex-shrink-0"
+      style={{ width: size, height: size }}
+      onError={() => setFailed(true)}
+      loading="lazy"
+    />
+  );
+}
+
+// ─── FLAG ─────────────────────────────────────────────────────────────────────
 // ─── FLAG ─────────────────────────────────────────────────────────────────────
 
 function FlagImg({
@@ -131,7 +123,7 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
       <div className="flex items-stretch gap-0">
         {/* Shield column */}
         <div className="flex-shrink-0 w-14 flex items-center justify-center bg-slate-900/40 py-3">
-          <ConfederationShield confederation={team.confederation} size={36} />
+          <TeamCrest teamId={team.id} confederation={team.confederation} size={36} />
         </div>
 
         {/* Main content */}
@@ -218,7 +210,7 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
 
         {/* Identity block: shield + flag + name */}
         <div className="flex items-center gap-4 px-4 py-4 border-b border-slate-800">
-          <ConfederationShield confederation={team.confederation} size={52} />
+          <TeamCrest teamId={team.id} confederation={team.confederation} size={52} />
           <div className="flex-1 min-w-0">
             {/* Flag top, name below */}
             <FlagImg flagCode={team.flagCode} size="md" />
@@ -457,7 +449,7 @@ export default function CentralDeDatos() {
                         : "border-slate-800 hover:border-slate-600"
                     }`}
                   >
-                    <ConfederationShield
+                    <FallbackShield
                       confederation={conf}
                       size={isActive ? 26 : 22}
                     />
