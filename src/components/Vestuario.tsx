@@ -545,21 +545,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
             </button>
           </div>
 
-          {/* Técnicos disponibles */}
-          <div className="px-4 pt-3 pb-2 flex items-center gap-2 flex-wrap">
-            <span className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">
-              Panel activo:
-            </span>
-            {ALL_MANAGERS.map((m) => (
-              <div key={m.id} className="flex items-center gap-1">
-                <ManagerAvatar manager={m} size={18} />
-                <span className="text-[8px] font-mono text-slate-600">
-                  {toTitleCase(m.name.split(" ")[0])}
-                </span>
-              </div>
-            ))}
-          </div>
-
           {/* Debate bubbles */}
           <div className="px-4 pb-5 pt-2">
             <DebatePanel playerId={player.id} refreshKey={refreshKey} />
