@@ -33,6 +33,49 @@ function FallbackShield({ confederation, size }: { confederation: string; size: 
         {c.abbr}
       </text>
     </svg>
+
+// ─── CONFEDERATION LOGO ───────────────────────────────────────────────────────
+// Loads real logo from /public/images/confederations/{filename}.png
+// Falls back to SVG shield if image missing
+
+const CONF_LOGO_FILE: Record<string, string> = {
+  CONMEBOL: "conmebol",
+  UEFA:     "uefa",
+  CONCACAF: "concacaf",
+  CAF:      "caf",
+  AFC:      "asianfc",
+  OFC:      "ofc",
+};
+
+function ConfederationLogo({
+  confederation,
+  size = 28,
+}: {
+  confederation: string;
+  size?: number;
+}) {
+  const [failed, setFailed] = useState(false);
+  const file = CONF_LOGO_FILE[confederation];
+
+  if (!file || failed) {
+    return <FallbackShield confederation={confederation} size={size} />;
+  }
+
+  return (
+    <img
+      src={`/images/confederations/${file}.png`}
+      alt={confederation}
+      width={size}
+      height={size}
+      className="object-contain"
+      style={{
+        width: size,
+        height: size,
+        filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5))",
+      }}
+      onError={() => setFailed(true)}
+      loading="lazy"
+    />
   );
 }
 
@@ -584,9 +627,9 @@ export default function CentralDeDatos() {
                         : "border-slate-800 hover:border-slate-600"
                     }`}
                   >
-                    <FallbackShield
+                    <ConfederationLogo
                       confederation={conf}
-                      size={isActive ? 26 : 22}
+                      size={isActive ? 30 : 26}
                     />
                     <span
                       className={`text-[8px] font-mono font-bold tracking-wide ${
