@@ -514,11 +514,11 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
               { label: "PJ", value: player.wc_partidos },
               { label: "Goles", value: player.wc_goles },
               {
-                label: player.wc_titulos === 1 ? "Campeón" : "Títulos",
-                value: player.wc_titulos > 0
+                label: Number(player.wc_titulos) === 1 ? "Campeón" : "Títulos",
+                value: Number(player.wc_titulos) > 0
                   ? `${player.wc_titulos}×`
                   : "0",
-                gold: player.wc_titulos > 0,
+                gold: Number(player.wc_titulos) > 0,
               },
             ].map((s) => (
               <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
