@@ -425,29 +425,23 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
 
         <div className="flex">
-          {/* Photo — uniform size with FIFA glow frame */}
+          {/* Photo — rounded corners, amber glow only (no colored border) */}
           <div
-            className="flex-shrink-0 relative p-[1.5px]"
-            style={{ width: 144, height: 216 }}
+            className="flex-shrink-0 relative overflow-hidden"
+            style={{
+              width: 120,
+              height: 180,
+              borderRadius: 10,
+              boxShadow: "0 0 18px 4px rgba(245,185,66,0.22), 0 0 6px 1px rgba(245,185,66,0.12), 0 4px 16px rgba(0,0,0,0.6)",
+              border: "1px solid rgba(255,255,255,0.10)",
+            }}
           >
-            <div
-              className="absolute inset-0 rounded-[2px]"
-              style={{
-                background: "linear-gradient(160deg, #f5b942 0%, #00d4aa 40%, #f5b942 80%, #00d4aa 100%)",
-              }}
+            <PlayerImage
+              playerId={player.id}
+              name={player.name}
+              className="w-full h-full object-cover object-top"
+              style={{ width: 120, height: 180, borderRadius: 10 }}
             />
-            <div
-              className="absolute inset-0 rounded-[2px]"
-              style={{ boxShadow: "0 0 18px 3px #f5b94230, 0 0 32px 6px #00d4aa18" }}
-            />
-            <div className="relative w-full overflow-hidden rounded-[1px]" style={{ height: 213 }}>
-              <PlayerImage
-                playerId={player.id}
-                name={player.name}
-                className="w-full h-full object-cover object-top"
-                style={{ width: 141, height: 213 }}
-              />
-            </div>
           </div>
 
           {/* Identity */}
@@ -514,18 +508,28 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
             Historial Copa del Mundo
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1">
             {[
-              { label: "Participaciones", value: player.wc_participaciones },
-              { label: "Partidos", value: player.wc_partidos },
+              { label: "Part.", value: player.wc_participaciones },
+              { label: "PJ", value: player.wc_partidos },
               { label: "Goles", value: player.wc_goles },
-              { label: "Títulos", value: player.wc_titulos },
+              {
+                label: player.wc_titulos === 1 ? "Campeón" : "Títulos",
+                value: player.wc_titulos > 0
+                  ? `${player.wc_titulos}×`
+                  : "0",
+                gold: player.wc_titulos > 0,
+              },
             ].map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-1.5 min-h-[52px]">
-                <span className="text-xl font-black text-white tabular-nums leading-none">
+              <div key={s.label} className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
+                <span
+                  className="text-lg font-black tabular-nums leading-none"
+                  style={{ color: (s as {gold?:boolean}).gold ? "#f5b942" : "white",
+                    textShadow: (s as {gold?:boolean}).gold ? "0 0 10px rgba(245,185,66,0.5)" : "none" }}
+                >
                   {s.value}
                 </span>
-                <span className={`text-[9px] text-center leading-tight px-1 ${LABEL_CLASS}`}>
+                <span className={`text-[8px] text-center leading-tight ${LABEL_CLASS}`}>
                   {s.label}
                 </span>
               </div>
