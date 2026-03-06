@@ -2,18 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── FONT VARIABLES (injected by layout.tsx via next/font) ─────────────────
+   --font-display → Barlow Condensed (headings, player names, scores)
+   --font-body    → Barlow (body text, labels)
+   ─────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body: 'Barlow', sans-serif;
+  --font-display: 'Barlow Condensed', system-ui, sans-serif;
+  --font-body: 'Barlow', system-ui, sans-serif;
+
+  /* App color tokens */
+  --color-dark:    #0a0e17;
+  --color-surface: #12182a;
+  --color-accent:  #00d4aa;
+  --color-gold:    #f5b942;
 }
 
-/* Base body font */
+/* ─── BASE ───────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
 body {
+  background-color: var(--color-dark);
+  color: #f1f5f9;
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  margin: 0;
 }
 
-/* Headings and display elements use condensed */
-h1, h2, h3, h4, h5, h6,
+/* ─── TYPOGRAPHY ─────────────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
 .font-display {
   font-family: var(--font-display);
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* ─── SELECTION ──────────────────────────────────────────────────────────── */
+
+::selection {
+  background-color: #00d4aa30;
+  color: #fff;
 }
