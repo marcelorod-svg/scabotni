@@ -351,12 +351,14 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
             </div>
             {/* Titles inline */}
             {team.titles > 0 && (
-              <div className="flex items-center gap-1 mt-1.5">
-                {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
-                  <span key={i} className="text-sca-gold text-sm"
-                    style={{ filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
-                ))}
-                <span className="text-[9px] font-mono text-sca-gold/60 ml-1">
+              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+                    <span key={i} className="text-sca-gold leading-none"
+                      style={{ fontSize: 13, filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
+                  ))}
+                </div>
+                <span className="text-[9px] font-mono text-sca-gold/60 leading-none" style={{ lineHeight: 1 }}>
                   {team.titles === 1 ? "1 título" : `${team.titles} títulos`}
                 </span>
               </div>
