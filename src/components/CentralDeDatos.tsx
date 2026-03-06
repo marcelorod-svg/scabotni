@@ -192,18 +192,18 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Country color wash — radial from crest corner, fades to transparent */}
+      {/* Country color wash — stronger radial from left, more visible */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse 80% 120% at 0% 50%, ${from}28 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 90% 130% at 0% 50%, ${from}45 0%, ${from}18 40%, transparent 72%)`,
           borderRadius: 12,
         }}
       />
 
       {/* Texture overlay */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        className="absolute inset-0 pointer-events-none opacity-[0.055]"
         style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }}
       />
 
@@ -212,16 +212,16 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
         className="absolute inset-x-0 top-0 pointer-events-none"
         style={{
           height: "50%",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 100%)",
           borderRadius: "12px 12px 0 0",
         }}
       />
 
       {/* Content */}
       <div className="relative flex items-center" style={{ minHeight: 80, padding: "0 16px 0 0" }}>
-        {/* Crest — sticker effect */}
-        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 88, height: 80 }}>
-          <TeamCrest teamId={team.id} confederation={team.confederation} size={64} />
+        {/* Flag — prominent left element */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 80, height: 80 }}>
+          <FlagImg flagCode={team.flagCode} size="lg" />
         </div>
 
         {/* Text */}
@@ -311,11 +311,11 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
           boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
         }}
       >
-        {/* Country color wash — large radial from top-left */}
+        {/* Country color wash — large radial from top-left, more visible */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 100% 160% at 0% 0%, ${getTeamGradient(team.id)[0]}22 0%, transparent 65%)`,
+            background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${getTeamGradient(team.id)[0]}40 0%, ${getTeamGradient(team.id)[0]}18 45%, transparent 70%)`,
           }}
         />
         {/* Texture */}
@@ -332,34 +332,42 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
           </span>
         </div>
 
-        {/* Identity: big crest + info */}
+        {/* Identity: large crest left + name + flag right */}
         <div className="relative flex items-center gap-4 px-4 py-5 border-b border-white/[0.07]">
-          {/* Crest — large sticker */}
-          <div className="flex-shrink-0">
-            <TeamCrest teamId={team.id} confederation={team.confederation} size={72} />
+          {/* Crest — dominant sticker, large */}
+          <div className="flex-shrink-0"
+            style={{ filter: "drop-shadow(0 0 14px rgba(255,255,255,0.28)) drop-shadow(0 4px 10px rgba(0,0,0,0.7))" }}>
+            <TeamCrest teamId={team.id} confederation={team.confederation} size={76} />
           </div>
+
+          {/* Name + confederation */}
           <div className="flex-1 min-w-0">
-            <FlagImg flagCode={team.flagCode} size="md" />
-            <div className="text-2xl font-black text-white tracking-wide mt-1.5 leading-tight"
+            <div className="text-2xl font-black text-white tracking-wide leading-tight"
               style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
               {team.name}
             </div>
-            <div className="text-[10px] mt-0.5 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
+            <div className="text-[10px] mt-1 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
               {team.confederation} · {team.participations} participaciones
             </div>
+            {/* Titles inline */}
+            {team.titles > 0 && (
+              <div className="flex items-center gap-1 mt-1.5">
+                {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
+                  <span key={i} className="text-sca-gold text-sm"
+                    style={{ filter: "drop-shadow(0 0 4px rgba(245,185,66,0.6))" }}>★</span>
+                ))}
+                <span className="text-[9px] font-mono text-sca-gold/60 ml-1">
+                  {team.titles === 1 ? "1 título" : `${team.titles} títulos`}
+                </span>
+              </div>
+            )}
           </div>
-          {/* Titles or best position */}
-          <div className="flex flex-col items-center gap-1 flex-shrink-0">
-            {team.titles > 0 ? (
-              <>
-                <div className="text-3xl font-black text-sca-gold"
-                  style={{ textShadow: "0 0 16px rgba(245,185,66,0.5)" }}>
-                  {team.titles}
-                </div>
-                <div className="text-[9px] font-mono text-sca-gold/60 uppercase tracking-widest">Títulos</div>
-              </>
-            ) : (
-              <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider text-center leading-tight max-w-[64px]">
+
+          {/* Flag — right side, prominent */}
+          <div className="flex-shrink-0 flex flex-col items-center gap-2">
+            <FlagImg flagCode={team.flagCode} size="lg" />
+            {!team.titles && (
+              <div className="text-[9px] font-mono text-white/35 uppercase tracking-wider text-center leading-tight max-w-[64px]">
                 {team.bestPosition.split("(")[0].trim()}
               </div>
             )}
