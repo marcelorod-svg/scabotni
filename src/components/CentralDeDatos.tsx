@@ -33,6 +33,8 @@ function FallbackShield({ confederation, size }: { confederation: string; size: 
         {c.abbr}
       </text>
     </svg>
+  );
+}
 
 // ─── CONFEDERATION LOGO ───────────────────────────────────────────────────────
 // Loads real logo from /public/images/confederations/{filename}.png
