@@ -1,6 +1,6 @@
 "use client";
-
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/useMobilePerf";
 
 export type TabId = "predictions" | "central" | "vestuario";
 
@@ -44,8 +44,18 @@ const tabs = [
 ];
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const isMobile = useIsMobile();
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-sca-dark/95 backdrop-blur-md">
+    // PATCH: en mobile, bg sólido sin backdrop-blur.
+    // backdrop-blur-md en un fixed siempre activo es el blur más caro de la app.
+    <nav
+      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 ${
+        isMobile
+          ? "bg-sca-dark"                        // sólido, sin costo de compositing
+          : "bg-sca-dark/95 backdrop-blur-md"    // desktop: igual que antes
+      }`}
+    >
       <div className="max-w-2xl mx-auto px-2 pb-safe">
         <div className="flex">
           {tabs.map((tab) => {
@@ -60,7 +70,12 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                   <motion.div
                     layoutId="tab-indicator"
                     className="absolute top-0 left-4 right-4 h-0.5 bg-sca-accent rounded-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                    // PATCH: en mobile tween rápido, sin spring physics costoso.
+                    transition={
+                      isMobile
+                        ? { type: "tween", duration: 0.15 }
+                        : { type: "spring", stiffness: 500, damping: 40 }
+                    }
                   />
                 )}
                 <span className={isActive ? "text-sca-accent" : "text-slate-500"}>
