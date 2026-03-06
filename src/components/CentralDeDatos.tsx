@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   worldCupTeams,
@@ -8,18 +8,17 @@ import {
   h2hData,
   type TeamStats,
 } from "@/lib/worldCupData";
+import { ScaBOTni_Slider } from "@/components/ScaBOTni_Slider";
 
-// ─── TEAM CREST ───────────────────────────────────────────────────────────────
-// Loads from /public/images/crests/{teamId}.png (or .svg)
-// Falls back to confederation-colored SVG shield if image missing
+// ─── CONF COLORS ──────────────────────────────────────────────────────────────
 
 const CONF_COLORS: Record<string, { bg: string; text: string; abbr: string; accent: string }> = {
-  CONMEBOL: { bg: "#0d1f44", text: "#60a5fa", abbr: "CON", accent: "#3b82f6" },
+  CONMEBOL: { bg: "#0d1f44", text: "#60a5fa", abbr: "CON",  accent: "#3b82f6" },
   UEFA:     { bg: "#0a1a2e", text: "#34d399", abbr: "UEFA", accent: "#10b981" },
-  CONCACAF: { bg: "#1c1408", text: "#fbbf24", abbr: "CCA", accent: "#f59e0b" },
-  CAF:      { bg: "#0d1f0d", text: "#4ade80", abbr: "CAF", accent: "#22c55e" },
-  AFC:      { bg: "#1a0d2e", text: "#c084fc", abbr: "AFC", accent: "#a855f7" },
-  OFC:      { bg: "#081a1f", text: "#22d3ee", abbr: "OFC", accent: "#06b6d4" },
+  CONCACAF: { bg: "#1c1408", text: "#fbbf24", abbr: "CCA",  accent: "#f59e0b" },
+  CAF:      { bg: "#0d1f0d", text: "#4ade80", abbr: "CAF",  accent: "#22c55e" },
+  AFC:      { bg: "#1a0d2e", text: "#c084fc", abbr: "AFC",  accent: "#a855f7" },
+  OFC:      { bg: "#081a1f", text: "#22d3ee", abbr: "OFC",  accent: "#06b6d4" },
 };
 
 function FallbackShield({ confederation, size }: { confederation: string; size: number }) {
@@ -36,10 +35,6 @@ function FallbackShield({ confederation, size }: { confederation: string; size: 
   );
 }
 
-// ─── CONFEDERATION LOGO ───────────────────────────────────────────────────────
-// Loads real logo from /public/images/confederations/{filename}.png
-// Falls back to SVG shield if image missing
-
 const CONF_LOGO_FILE: Record<string, string> = {
   CONMEBOL: "conmebol",
   UEFA:     "uefa",
@@ -49,20 +44,10 @@ const CONF_LOGO_FILE: Record<string, string> = {
   OFC:      "ofc",
 };
 
-function ConfederationLogo({
-  confederation,
-  size = 28,
-}: {
-  confederation: string;
-  size?: number;
-}) {
+function ConfederationLogo({ confederation, size = 28 }: { confederation: string; size?: number }) {
   const [failed, setFailed] = useState(false);
   const file = CONF_LOGO_FILE[confederation];
-
-  if (!file || failed) {
-    return <FallbackShield confederation={confederation} size={size} />;
-  }
-
+  if (!file || failed) return <FallbackShield confederation={confederation} size={size} />;
   return (
     <img
       src={`/images/confederations/${file}.png`}
@@ -70,32 +55,16 @@ function ConfederationLogo({
       width={size}
       height={size}
       className="object-contain"
-      style={{
-        width: size,
-        height: size,
-        filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5))",
-      }}
+      style={{ width: size, height: size, filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5))" }}
       onError={() => setFailed(true)}
       loading="lazy"
     />
   );
 }
 
-function TeamCrest({
-  teamId,
-  confederation,
-  size = 36,
-}: {
-  teamId: string;
-  confederation: string;
-  size?: number;
-}) {
+function TeamCrest({ teamId, confederation, size = 36 }: { teamId: string; confederation: string; size?: number }) {
   const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return <FallbackShield confederation={confederation} size={size} />;
-  }
-
+  if (failed) return <FallbackShield confederation={confederation} size={size} />;
   return (
     <img
       src={`/images/crests/${teamId}.png`}
@@ -103,27 +72,14 @@ function TeamCrest({
       width={size}
       height={size}
       className="object-contain flex-shrink-0"
-      style={{
-        width: size,
-        height: size,
-        filter: `drop-shadow(0 3px 8px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.8))`,
-      }}
+      style={{ width: size, height: size, filter: "drop-shadow(0 3px 8px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }}
       onError={() => setFailed(true)}
       loading="lazy"
     />
   );
 }
 
-// ─── FLAG ─────────────────────────────────────────────────────────────────────
-// ─── FLAG ─────────────────────────────────────────────────────────────────────
-
-function FlagImg({
-  flagCode,
-  size = "md",
-}: {
-  flagCode: string;
-  size?: "xs" | "sm" | "md" | "lg";
-}) {
+function FlagImg({ flagCode, size = "md" }: { flagCode: string; size?: "xs" | "sm" | "md" | "lg" }) {
   const dims =
     size === "lg" ? "w-14 h-[38px]" :
     size === "md" ? "w-9 h-6" :
@@ -139,8 +95,6 @@ function FlagImg({
   );
 }
 
-// ─── STAT BAR ─────────────────────────────────────────────────────────────────
-
 function StatBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
@@ -155,17 +109,15 @@ function StatBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-// ─── TEAM GRADIENTS — EA FC 26 style per country ────────────────────────────
-// Each entry: [from-color, to-color, text-shadow-color]
+// ─── TEAM GRADIENTS ───────────────────────────────────────────────────────────
+
 const TEAM_GRADIENTS: Record<string, [string, string, string]> = {
-  // CONMEBOL
   argentina:    ["#74b9e8", "#2563eb", "#60a5fa"],
   brazil:       ["#22c55e", "#15803d", "#4ade80"],
   uruguay:      ["#60a5fa", "#1e40af", "#93c5fd"],
   colombia:     ["#fbbf24", "#d97706", "#fde68a"],
   ecuador:      ["#facc15", "#a16207", "#fef08a"],
   paraguay:     ["#ef4444", "#991b1b", "#fca5a5"],
-  // UEFA
   germany:      ["#6b7280", "#374151", "#d1d5db"],
   france:       ["#3b82f6", "#1d4ed8", "#93c5fd"],
   spain:        ["#ef4444", "#b91c1c", "#fca5a5"],
@@ -178,14 +130,12 @@ const TEAM_GRADIENTS: Record<string, [string, string, string]> = {
   austria:      ["#dc2626", "#7f1d1d", "#fca5a5"],
   scotland:     ["#3b82f6", "#1e3a5f", "#93c5fd"],
   norway:       ["#dc2626", "#1a1a1a", "#fca5a5"],
-  // CONCACAF
   usa:          ["#3b82f6", "#7f1d1d", "#93c5fd"],
   mexico:       ["#22c55e", "#166534", "#4ade80"],
   canada:       ["#ef4444", "#7f1d1d", "#fca5a5"],
   panama:       ["#ef4444", "#1e3a8a", "#fca5a5"],
   curacao:      ["#f59e0b", "#1e3a8a", "#fde68a"],
   haiti:        ["#1d4ed8", "#7f1d1d", "#93c5fd"],
-  // CAF
   morocco:      ["#dc2626", "#14532d", "#fca5a5"],
   senegal:      ["#16a34a", "#facc15", "#4ade80"],
   south_africa: ["#22c55e", "#facc15", "#4ade80"],
@@ -195,16 +145,14 @@ const TEAM_GRADIENTS: Record<string, [string, string, string]> = {
   algeria:      ["#f8fafc", "#16a34a", "#e2e8f0"],
   egypt:        ["#dc2626", "#1a1a1a", "#fca5a5"],
   cape_verde:   ["#3b82f6", "#16a34a", "#93c5fd"],
-  // AFC
   japan:        ["#dc2626", "#1a1a1a", "#fca5a5"],
   south_korea:  ["#dc2626", "#1e3a8a", "#fca5a5"],
   iran:         ["#16a34a", "#dc2626", "#4ade80"],
   australia:    ["#facc15", "#16a34a", "#fef08a"],
-  saudi_arabia:  ["#16a34a", "#1a1a1a", "#4ade80"],
+  saudi_arabia: ["#16a34a", "#1a1a1a", "#4ade80"],
   qatar:        ["#9f1239", "#1a1a1a", "#fda4af"],
   jordan:       ["#dc2626", "#15803d", "#fca5a5"],
   uzbekistan:   ["#3b82f6", "#16a34a", "#93c5fd"],
-  // OFC
   new_zealand:  ["#64748b", "#1e293b", "#cbd5e1"],
 };
 
@@ -212,18 +160,26 @@ function getTeamGradient(teamId: string): [string, string, string] {
   return TEAM_GRADIENTS[teamId] ?? ["#1e293b", "#0f172a", "#94a3b8"];
 }
 
-// Micro geometric texture as inline SVG data URI
 const TEXTURE_SVG = `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-width='0.4' opacity='0.08'%3E%3Cpolygon points='20,2 38,11 38,29 20,38 2,29 2,11'/%3E%3Cpolygon points='20,8 32,14 32,26 20,32 8,26 8,14'/%3E%3Cline x1='20' y1='2' x2='20' y2='38'/%3E%3Cline x1='2' y1='20' x2='38' y2='20'/%3E%3C/g%3E%3C/svg%3E")`;
 
 // ─── TEAM CARD (list) ─────────────────────────────────────────────────────────
 
-function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
+function TeamCard({
+  team,
+  onClick,
+  cardRef,
+}: {
+  team: TeamStats;
+  onClick: () => void;
+  cardRef: (el: HTMLButtonElement | null) => void;
+}) {
   const winRate = team.played > 0 ? Math.round((team.won / team.played) * 100) : 0;
   const isDebut = team.played === 0;
   const [from, , glow] = getTeamGradient(team.id);
 
   return (
     <motion.button
+      ref={cardRef}
       whileHover={{ scale: 1.018, y: -1 }}
       whileTap={{ scale: 0.982 }}
       onClick={onClick}
@@ -237,39 +193,22 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Country color wash — stronger radial from left, more visible */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse 90% 130% at 0% 50%, ${from}45 0%, ${from}18 40%, transparent 72%)`,
-          borderRadius: 12,
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: `radial-gradient(ellipse 90% 130% at 0% 50%, ${from}45 0%, ${from}18 40%, transparent 72%)`,
+        borderRadius: 12,
+      }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.055]"
+        style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }} />
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+        height: "50%",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 100%)",
+        borderRadius: "12px 12px 0 0",
+      }} />
 
-      {/* Texture overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.055]"
-        style={{ backgroundImage: TEXTURE_SVG, borderRadius: 12 }}
-      />
-
-      {/* Glossy top sheen */}
-      <div
-        className="absolute inset-x-0 top-0 pointer-events-none"
-        style={{
-          height: "50%",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.09) 0%, transparent 100%)",
-          borderRadius: "12px 12px 0 0",
-        }}
-      />
-
-      {/* Content */}
       <div className="relative flex items-center" style={{ minHeight: 80, padding: "0 16px 0 0" }}>
-        {/* Flag — prominent left element */}
         <div className="flex-shrink-0 flex items-center justify-center" style={{ width: 80, height: 80 }}>
           <FlagImg flagCode={team.flagCode} size="lg" />
         </div>
-
-        {/* Text */}
         <div className="flex-1 min-w-0 py-3">
           <div className="font-black text-white text-base leading-tight truncate"
             style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>
@@ -278,7 +217,6 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
           <div className="text-[10px] mt-0.5 font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
             {team.confederation} · {team.participations} part.
           </div>
-
           <div className="mt-2">
             {isDebut ? (
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
@@ -306,8 +244,6 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
             )}
           </div>
         </div>
-
-        {/* Titles badge — stars only */}
         {team.titles > 0 && (
           <div className="absolute top-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full"
             style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(245,185,66,0.35)", backdropFilter: "blur(6px)" }}>
@@ -323,7 +259,7 @@ function TeamCard({ team, onClick }: { team: TeamStats; onClick: () => void }) {
 
 // ─── TEAM DETAIL ──────────────────────────────────────────────────────────────
 
-function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
+function TeamDetail({ team, onBack }: { team: TeamStats; onBack?: () => void }) {
   const winRate = team.played > 0 ? ((team.won / team.played) * 100).toFixed(1) : "—";
   const goalAvg = team.played > 0 ? (team.goalsFor / team.played).toFixed(2) : "—";
   const h2h = h2hData.find((h) => h.teamId === team.id);
@@ -338,14 +274,16 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
       exit={{ opacity: 0, x: -16 }}
       className="space-y-4"
     >
-      <button
-        onClick={onBack}
-        className="text-[10px] text-slate-600 hover:text-white flex items-center gap-1.5 font-mono tracking-wider uppercase transition-colors"
-      >
-        ← Todas las selecciones
-      </button>
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="text-[10px] text-slate-600 hover:text-white flex items-center gap-1.5 font-mono tracking-wider uppercase transition-colors"
+        >
+          ← Todas las selecciones
+        </button>
+      )}
 
-      {/* ── HEADER FICHA — glassmorphism ─────────────────── */}
+      {/* ── HEADER FICHA ──────────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden"
         style={{
@@ -357,36 +295,25 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
           boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
         }}
       >
-        {/* Country color wash — large radial from top-left, more visible */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${getTeamGradient(team.id)[0]}40 0%, ${getTeamGradient(team.id)[0]}18 45%, transparent 70%)`,
-          }}
-        />
-        {/* Texture */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: `radial-gradient(ellipse 110% 170% at 0% 0%, ${getTeamGradient(team.id)[0]}40 0%, ${getTeamGradient(team.id)[0]}18 45%, transparent 70%)`,
+        }} />
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{ backgroundImage: TEXTURE_SVG }} />
-        {/* Gloss top sheen */}
         <div className="absolute inset-x-0 top-0 pointer-events-none"
           style={{ height: "35%", background: "linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 100%)" }} />
 
-        {/* Header label */}
         <div className="relative px-4 pt-3 pb-2 border-b border-white/[0.07]">
           <span className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase">
             Ficha de Selección · Copa del Mundo 2026
           </span>
         </div>
 
-        {/* Identity: large crest left + name + flag right */}
         <div className="relative flex items-center gap-4 px-4 py-5 border-b border-white/[0.07]">
-          {/* Crest — dominant sticker, large */}
           <div className="flex-shrink-0"
             style={{ filter: "drop-shadow(0 0 14px rgba(255,255,255,0.28)) drop-shadow(0 4px 10px rgba(0,0,0,0.7))" }}>
             <TeamCrest teamId={team.id} confederation={team.confederation} size={76} />
           </div>
-
-          {/* Name + confederation */}
           <div className="flex-1 min-w-0">
             <div className="text-2xl font-black text-white tracking-wide leading-tight"
               style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
@@ -395,7 +322,6 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
             <div className="text-[10px] mt-1 font-mono" style={{ color: "rgba(255,255,255,0.45)" }}>
               {team.confederation} · {team.participations} participaciones
             </div>
-            {/* Titles inline */}
             {team.titles > 0 && (
               <div className="flex items-center gap-0.5 mt-1.5">
                 {Array.from({ length: Math.min(team.titles, 5) }).map((_, i) => (
@@ -405,14 +331,11 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
               </div>
             )}
           </div>
-
-          {/* Flag — right side, prominent, no text */}
           <div className="flex-shrink-0 flex items-center">
             <FlagImg flagCode={team.flagCode} size="lg" />
           </div>
         </div>
 
-        {/* Best position */}
         <div className="relative px-4 py-2.5 border-b border-white/[0.07] flex items-baseline gap-2">
           <span className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest flex-shrink-0">
             Mejor posición:
@@ -429,19 +352,18 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
           </div>
         ) : (
           <>
-            {/* Stats grid */}
             <div className="relative px-4 pt-3 pb-4">
               <div className="text-[9px] font-mono text-amber-400/70 tracking-widest uppercase mb-3">
                 Estadísticas Copa del Mundo
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                 {[
-                  { label: "Partidos jugados", value: team.played, color: "" },
-                  { label: "Partidos ganados", value: team.won, color: "text-green-400" },
-                  { label: "Empates", value: team.drawn, color: "" },
-                  { label: "Derrotas", value: team.lost, color: "text-red-400" },
-                  { label: "Goles a favor", value: team.goalsFor, color: "text-sca-accent" },
-                  { label: "Goles en contra", value: team.goalsAgainst, color: "" },
+                  { label: "Partidos jugados",  value: team.played,       color: "" },
+                  { label: "Partidos ganados",  value: team.won,          color: "text-green-400" },
+                  { label: "Empates",           value: team.drawn,        color: "" },
+                  { label: "Derrotas",          value: team.lost,         color: "text-red-400" },
+                  { label: "Goles a favor",     value: team.goalsFor,     color: "text-sca-accent" },
+                  { label: "Goles en contra",   value: team.goalsAgainst, color: "" },
                 ].map((s) => (
                   <div key={s.label}
                     className="flex justify-between items-center py-1.5"
@@ -453,12 +375,11 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
               </div>
             </div>
 
-            {/* KPIs */}
             <div className="relative grid grid-cols-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
               {[
-                { label: "Rendimiento", value: `${winRate}%`, color: "text-sca-accent" },
-                { label: "Goles / PJ", value: goalAvg, color: "text-amber-400" },
-                { label: "Primera part.", value: team.firstYear, color: "text-slate-300" },
+                { label: "Rendimiento",   value: `${winRate}%`,   color: "text-sca-accent" },
+                { label: "Goles / PJ",    value: goalAvg,         color: "text-amber-400" },
+                { label: "Primera part.", value: team.firstYear,  color: "text-slate-300" },
               ].map((k, i) => (
                 <div key={k.label}
                   className="flex flex-col items-center py-3 gap-1"
@@ -470,7 +391,6 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
               ))}
             </div>
 
-            {/* Top rival */}
             {topRivalRecord && (
               <div className="relative px-4 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest mb-2">
@@ -494,9 +414,9 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
         )}
       </div>
 
-      {/* ── H2H EXPANDIBLE ───────────────────────────────── */}
+      {/* ── H2H EXPANDIBLE ────────────────────────────────────────────── */}
       {!isDebut && h2h && (
-        <div className="overflow-hidden" style={{ borderRadius:12, border:"1px solid rgba(255,255,255,0.08)", background:"rgba(13,17,23,0.55)", backdropFilter:"blur(10px)", WebkitBackdropFilter:"blur(10px)" }}>
+        <div className="overflow-hidden" style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(13,17,23,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
           <button
             onClick={() => setShowH2H(!showH2H)}
             className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-900/40 transition-colors"
@@ -522,10 +442,8 @@ function TeamDetail({ team, onBack }: { team: TeamStats; onBack: () => void }) {
               >
                 <div className="px-4 pb-4 space-y-1">
                   {h2h.records.map((r) => (
-                    <div
-                      key={r.opponent}
-                      className="flex items-center gap-2 text-[11px] py-2 border-b border-slate-800 last:border-0"
-                    >
+                    <div key={r.opponent}
+                      className="flex items-center gap-2 text-[11px] py-2 border-b border-slate-800 last:border-0">
                       <span className="text-slate-300 font-semibold w-28 truncate">{r.opponent}</span>
                       <span className="text-slate-600 font-mono">{r.played}P</span>
                       <span className="text-green-400 font-bold ml-auto">{r.won}G</span>
@@ -571,8 +489,26 @@ export default function CentralDeDatos() {
   const [filter, setFilter] = useState<(typeof CONFEDERATIONS)[number]>("all");
   const [showEditions, setShowEditions] = useState(false);
 
+  // ── Slider state ────────────────────────────────────────────────
+  const [sliderOpen, setSliderOpen] = useState(false);
+  const [sliderIndex, setSliderIndex] = useState(0);
+  const [originRect, setOriginRect] = useState<DOMRect | null>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   const filtered =
     filter === "all" ? worldCupTeams : worldCupTeams.filter((t) => t.confederation === filter);
+
+  // Resetear refs cuando cambia el filtro
+  useEffect(() => {
+    cardRefs.current = cardRefs.current.slice(0, filtered.length);
+  }, [filtered.length]);
+
+  function openSlider(index: number) {
+    const rect = cardRefs.current[index]?.getBoundingClientRect() ?? null;
+    setOriginRect(rect);
+    setSliderIndex(index);
+    setSliderOpen(true);
+  }
 
   return (
     <div className="space-y-4">
@@ -595,7 +531,7 @@ export default function CentralDeDatos() {
               </p>
             </div>
 
-            {/* Confederation shields filter */}
+            {/* Confederation filter */}
             <div className="grid grid-cols-4 gap-1.5">
               <button
                 onClick={() => setFilter("all")}
@@ -620,15 +556,10 @@ export default function CentralDeDatos() {
                         : "border-slate-800 hover:border-slate-600"
                     }`}
                   >
-                    <ConfederationLogo
-                      confederation={conf}
-                      size={isActive ? 30 : 26}
-                    />
-                    <span
-                      className={`text-[8px] font-mono font-bold tracking-wide ${
-                        isActive ? "text-sca-accent" : "text-slate-600"
-                      }`}
-                    >
+                    <ConfederationLogo confederation={conf} size={isActive ? 30 : 26} />
+                    <span className={`text-[8px] font-mono font-bold tracking-wide ${
+                      isActive ? "text-sca-accent" : "text-slate-600"
+                    }`}>
                       {conf === "CONCACAF" ? "CCF" : conf} ({count})
                     </span>
                   </button>
@@ -663,15 +594,11 @@ export default function CentralDeDatos() {
                   >
                     <div className="px-4 pb-3 space-y-0 max-h-64 overflow-y-auto">
                       {worldCupEditions.map((e) => (
-                        <div
-                          key={e.year}
-                          className="flex items-center gap-2 text-[10px] py-1.5 border-b border-slate-800 last:border-0"
-                        >
-                          <span
-                            className={`font-bold w-10 tabular-nums ${
-                              e.year === 2026 ? "text-sca-accent" : "text-amber-400/80"
-                            }`}
-                          >
+                        <div key={e.year}
+                          className="flex items-center gap-2 text-[10px] py-1.5 border-b border-slate-800 last:border-0">
+                          <span className={`font-bold w-10 tabular-nums ${
+                            e.year === 2026 ? "text-sca-accent" : "text-amber-400/80"
+                          }`}>
                             {e.year}
                           </span>
                           <span className="text-slate-600 w-28 truncate">{e.host}</span>
@@ -695,8 +622,13 @@ export default function CentralDeDatos() {
 
             {/* Team list */}
             <div className="space-y-2">
-              {filtered.map((team) => (
-                <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} />
+              {filtered.map((team, index) => (
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  cardRef={(el) => { cardRefs.current[index] = el; }}
+                  onClick={() => openSlider(index)}
+                />
               ))}
             </div>
 
@@ -718,6 +650,23 @@ export default function CentralDeDatos() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── SLIDER MODAL ──────────────────────────────────────────────── */}
+      <ScaBOTni_Slider
+        items={filtered}
+        initialIndex={sliderIndex}
+        isOpen={sliderOpen}
+        onClose={() => {
+          setSliderOpen(false);
+          setOriginRect(null);
+        }}
+        renderCard={(team) => (
+          <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+            <TeamDetail team={team as TeamStats} />
+          </div>
+        )}
+        originRect={originRect}
+      />
     </div>
   );
 }
