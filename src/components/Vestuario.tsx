@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   players,
@@ -11,6 +11,7 @@ import {
   type ManagerDef,
 } from "@/lib/playerData";
 import PlayerImage from "@/components/PlayerImage";
+import { ScaBOTni_Slider } from "@/components/ScaBOTni_Slider";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -95,7 +96,6 @@ function StatBar({ value }: { value: number }) {
   );
 }
 
-// ── Manager Avatar — real photo from /public/avatars/{id}.png, fallback to initials
 function ManagerAvatar({
   manager,
   size = 40,
@@ -127,10 +127,7 @@ function ManagerAvatar({
           loading="lazy"
         />
       ) : (
-        // Fallback: initials in a colored circle
-        <div
-          className="w-full h-full flex items-center justify-center bg-slate-900"
-        >
+        <div className="w-full h-full flex items-center justify-center bg-slate-900">
           <span className="text-[10px] font-black font-mono text-amber-400 tracking-wider">
             {manager.initials}
           </span>
@@ -140,7 +137,6 @@ function ManagerAvatar({
   );
 }
 
-// ── Pitch background SVG lines (very subtle, field markings)
 function PitchLines() {
   return (
     <svg
@@ -149,27 +145,16 @@ function PitchLines() {
       preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Outer boundary */}
       <rect x="20" y="15" width="360" height="270" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Center line */}
       <line x1="200" y1="15" x2="200" y2="285" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Center circle */}
       <circle cx="200" cy="150" r="45" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Center dot */}
       <circle cx="200" cy="150" r="2" fill="white" opacity="0.06" />
-      {/* Left penalty area */}
       <rect x="20" y="90" width="70" height="120" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Left goal area */}
       <rect x="20" y="120" width="30" height="60" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Right penalty area */}
       <rect x="310" y="90" width="70" height="120" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Right goal area */}
       <rect x="350" y="120" width="30" height="60" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Left penalty arc */}
       <path d="M 90 120 A 35 35 0 0 1 90 180" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Right penalty arc */}
       <path d="M 310 120 A 35 35 0 0 0 310 180" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
-      {/* Corner arcs */}
       <path d="M 20 25 A 8 8 0 0 1 28 15" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
       <path d="M 372 15 A 8 8 0 0 1 380 25" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
       <path d="M 20 275 A 8 8 0 0 0 28 285" fill="none" stroke="white" strokeWidth="0.6" opacity="0.07" />
@@ -178,7 +163,6 @@ function PitchLines() {
   );
 }
 
-// ── Typewriter bubble — premium dark module with amber border
 function TypewriterBubble({
   manager,
   comment,
@@ -202,17 +186,13 @@ function TypewriterBubble({
       className={`flex items-start gap-3 ${isRight ? "flex-row-reverse" : "flex-row"}`}
     >
       <ManagerAvatar manager={manager} size={40} />
-
       <div className="flex-1 min-w-0">
-        {/* Name + role header */}
         <div className={`flex items-baseline gap-2 mb-1.5 ${isRight ? "flex-row-reverse" : ""}`}>
           <span className="text-[11px] font-bold text-amber-400 tracking-tight">
             {toTitleCase(manager.name)}
           </span>
           <span className="text-[9px] text-slate-500 font-mono truncate">{manager.role}</span>
         </div>
-
-        {/* Premium bubble */}
         <motion.div
           animate={isActive && !done ? {
             boxShadow: [
@@ -227,9 +207,7 @@ function TypewriterBubble({
           className="relative rounded-xl border border-amber-500/30 overflow-hidden"
           style={{ background: "rgba(0,0,0,0.75)" }}
         >
-          {/* Subtle amber top line */}
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
-
           <p className="px-4 py-3 text-[12px] text-slate-200 leading-relaxed font-sans">
             "{displayed}
             {!done && (
@@ -249,9 +227,18 @@ function TypewriterBubble({
 
 // ─── PLAYER CARD (list view) ──────────────────────────────────────────────────
 
-function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }) {
+function PlayerCard({
+  player,
+  onClick,
+  cardRef,
+}: {
+  player: Player;
+  onClick: () => void;
+  cardRef: (el: HTMLButtonElement | null) => void;
+}) {
   return (
     <motion.button
+      ref={cardRef}
       whileHover={{ scale: 1.012 }}
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
@@ -265,19 +252,16 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
         boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
       }}
     >
-      {/* Position color wash */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: "radial-gradient(ellipse 70% 110% at 0% 50%, rgba(245,185,66,0.12) 0%, transparent 65%)",
         borderRadius: 12,
       }} />
-      {/* Gloss top */}
       <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
         height: "45%",
         background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
         borderRadius: "12px 12px 0 0",
       }} />
       <div className="relative flex">
-        {/* Photo — uniform 72×96, object-cover object-top with glow border */}
         <div
           className="flex-shrink-0 relative overflow-hidden"
           style={{ width: 72, height: 96 }}
@@ -296,8 +280,6 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
             style={{ width: 72, height: 96 }}
           />
         </div>
-
-        {/* Data */}
         <div className="flex-1 px-3 py-2.5 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0">
@@ -315,7 +297,6 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
               </span>
             </div>
           </div>
-
           <div className="grid grid-cols-3 gap-x-3">
             {STAT_LABELS.slice(0, 3).map(({ key, label }) => (
               <div key={label}>
@@ -329,7 +310,6 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
               </div>
             ))}
           </div>
-
           <div className="flex items-center justify-between mt-2">
             <span className="text-[9px] text-slate-700 font-mono">
               {player.era === "current" ? "Activo" : "Histórico"}
@@ -378,7 +358,7 @@ function DebatePanel({ playerId, refreshKey }: { playerId: string; refreshKey: n
 
 // ─── PLAYER DETAIL ────────────────────────────────────────────────────────────
 
-function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }) {
+function PlayerDetail({ player, onBack }: { player: Player; onBack?: () => void }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
@@ -388,12 +368,15 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
       exit={{ opacity: 0, y: -12 }}
       className="space-y-4"
     >
-      <button
-        onClick={onBack}
-        className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
-      >
-        ← Volver al vestuario
-      </button>
+      {/* onBack solo se muestra cuando viene del modo lista normal */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="text-[10px] text-slate-600 hover:text-slate-300 flex items-center gap-1.5 font-mono tracking-widest uppercase transition-colors"
+        >
+          ← Volver al vestuario
+        </button>
+      )}
 
       {/* ── FICHA PRINCIPAL ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{
@@ -404,11 +387,9 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         WebkitBackdropFilter: "blur(12px)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
       }}>
-        {/* Amber identity wash from top-left */}
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)",
         }} />
-        {/* Gloss */}
         <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
           height: "30%",
           background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
@@ -425,7 +406,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
 
         <div className="flex">
-          {/* Photo — rounded corners, amber glow only (no colored border) */}
           <div
             className="flex-shrink-0 relative overflow-hidden"
             style={{
@@ -443,8 +423,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
               style={{ width: 120, height: 180, borderRadius: 10 }}
             />
           </div>
-
-          {/* Identity */}
           <div className="flex-1 p-4 space-y-3 min-w-0">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -460,7 +438,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
                 {player.fullName}
               </div>
             </div>
-
             <div className="flex items-center gap-3">
               <div>
                 <div className="text-4xl font-black text-white leading-none tabular-nums">
@@ -483,7 +460,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           </div>
         </div>
 
-        {/* Indicadores */}
         <div className="border-t border-slate-800 px-4 pt-3 pb-4">
           <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
             Indicadores de rendimiento
@@ -503,7 +479,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           </div>
         </div>
 
-        {/* WC record */}
         <div className="relative px-4 pt-3 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
           <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
             Historial Copa del Mundo
@@ -530,7 +505,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
                     </span>
                   </div>
                 ))}
-                {/* Títulos cell */}
                 <div className="flex flex-col items-center gap-1 min-h-[48px] px-0.5">
                   {isChampion ? (
                     <span className="text-xl font-black leading-none text-sca-gold"
@@ -555,7 +529,7 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
       </div>
 
-      {/* ── PIZARRA TÁCTICA DE INTELIGENCIA ─────────────────────────── */}
+      {/* ── PIZARRA TÁCTICA ─────────────────────────────────────────── */}
       <motion.div
         className="rounded-xl overflow-hidden relative"
         style={{
@@ -565,38 +539,28 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           WebkitBackdropFilter: "blur(8px)",
         }}
       >
-        {/* Background: dark green tactical board + pitch lines */}
         <div
           className="absolute inset-0"
           style={{
             background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)",
           }}
         />
-        {/* Glass layer on top of pitch bg */}
-        <div className="absolute inset-0" style={{
-          background: "rgba(5,14,10,0.35)",
-        }} />
-        {/* Amber color wash from top-left corner */}
+        <div className="absolute inset-0" style={{ background: "rgba(5,14,10,0.35)" }} />
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)",
         }} />
-        {/* Gloss sheen */}
         <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
           height: "30%",
           background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
           borderRadius: "12px 12px 0 0",
         }} />
         <PitchLines />
-
-        {/* Content over background */}
         <div className="relative z-10">
-          {/* Header */}
           <div
             className="border-b border-amber-500/15 px-4 py-3 flex items-center justify-between"
             style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}
           >
             <div className="flex items-center gap-2">
-              {/* Pulsing green dot — AI active */}
               <motion.div
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -618,8 +582,6 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
               Nuevo debate
             </button>
           </div>
-
-          {/* Debate bubbles */}
           <div className="px-4 pb-5 pt-2">
             <DebatePanel playerId={player.id} refreshKey={refreshKey} />
           </div>
@@ -636,11 +598,29 @@ export default function Vestuario() {
   const [era, setEra] = useState<"all" | "current" | "historic">("all");
   const [position, setPosition] = useState<"all" | "GK" | "DEF" | "MID" | "FWD">("all");
 
+  // ── Slider state ──────────────────────────────────────────────────
+  const [sliderOpen, setSliderOpen] = useState(false);
+  const [sliderIndex, setSliderIndex] = useState(0);
+  const [originRect, setOriginRect] = useState<DOMRect | null>(null);
+  const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   const filtered = players.filter((p) => {
     if (era !== "all" && p.era !== era) return false;
     if (position !== "all" && p.position !== position) return false;
     return true;
   });
+
+  // Resetear refs cuando cambia el filtro
+  useEffect(() => {
+    cardRefs.current = cardRefs.current.slice(0, filtered.length);
+  }, [filtered.length]);
+
+  function openSlider(index: number) {
+    const rect = cardRefs.current[index]?.getBoundingClientRect() ?? null;
+    setOriginRect(rect);
+    setSliderIndex(index);
+    setSliderOpen(true);
+  }
 
   return (
     <div className="space-y-4">
@@ -707,11 +687,12 @@ export default function Vestuario() {
             </div>
 
             <div className="space-y-2">
-              {filtered.map((player) => (
+              {filtered.map((player, index) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
-                  onClick={() => setSelectedPlayer(player)}
+                  cardRef={(el) => { cardRefs.current[index] = el; }}
+                  onClick={() => openSlider(index)}
                 />
               ))}
             </div>
@@ -724,6 +705,23 @@ export default function Vestuario() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── SLIDER MODAL ─────────────────────────────────────────────── */}
+      <ScaBOTni_Slider
+        items={filtered}
+        initialIndex={sliderIndex}
+        isOpen={sliderOpen}
+        onClose={() => {
+          setSliderOpen(false);
+          setOriginRect(null);
+        }}
+        renderCard={(player) => (
+          <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+            <PlayerDetail player={player as Player} />
+          </div>
+        )}
+        originRect={originRect}
+      />
     </div>
   );
 }
