@@ -255,10 +255,28 @@ function PlayerCard({ player, onClick }: { player: Player; onClick: () => void }
       whileHover={{ scale: 1.012 }}
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
-      className="w-full text-left rounded-sm border border-slate-700/50 bg-[#0d1117] hover:border-amber-500/30 transition-colors overflow-hidden"
+      className="w-full text-left overflow-hidden transition-all relative"
+      style={{
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(13,17,23,0.55)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+      }}
     >
-      <div className="h-[2px] w-full bg-slate-800" />
-      <div className="flex">
+      {/* Position color wash */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "radial-gradient(ellipse 70% 110% at 0% 50%, rgba(245,185,66,0.12) 0%, transparent 65%)",
+        borderRadius: 12,
+      }} />
+      {/* Gloss top */}
+      <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+        height: "45%",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%)",
+        borderRadius: "12px 12px 0 0",
+      }} />
+      <div className="relative flex">
         {/* Photo — uniform 72×96, object-cover object-top with glow border */}
         <div
           className="flex-shrink-0 relative overflow-hidden"
@@ -378,8 +396,26 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
       </button>
 
       {/* ── FICHA PRINCIPAL ─────────────────────────────────────────── */}
-      <div className="rounded-sm border border-slate-700/50 bg-[#0d1117] overflow-hidden">
-        <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
+      <div className="relative overflow-hidden" style={{
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(13,17,23,0.58)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+      }}>
+        {/* Amber identity wash from top-left */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 100% 160% at 0% 0%, rgba(245,185,66,0.18) 0%, rgba(245,185,66,0.06) 40%, transparent 68%)",
+        }} />
+        {/* Gloss */}
+        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+          height: "30%",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 100%)",
+          borderRadius: "16px 16px 0 0",
+        }} />
+        <div className="relative bg-transparent border-b px-4 py-2 flex items-center justify-between"
+          style={{ borderColor: "rgba(255,255,255,0.07)" }}>
           <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
             Ficha de Inteligencia Deportiva
           </span>
@@ -474,7 +510,7 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
         </div>
 
         {/* WC record */}
-        <div className="border-t border-slate-800 px-4 pt-3 pb-4 bg-slate-900/30">
+        <div className="relative px-4 pt-3 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
           <div className={`text-[9px] uppercase tracking-widest mb-3 ${LABEL_CLASS}`}>
             Historial Copa del Mundo
           </div>
@@ -500,18 +536,35 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
 
       {/* ── PIZARRA TÁCTICA DE INTELIGENCIA ─────────────────────────── */}
       <motion.div
-        className="rounded-xl overflow-hidden border border-amber-500/20 relative"
+        className="rounded-xl overflow-hidden relative"
         style={{
-          boxShadow: "0 0 24px rgba(251,191,36,0.08), 0 0 1px rgba(251,191,36,0.3)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 0 28px rgba(251,191,36,0.10), 0 8px 32px rgba(0,0,0,0.5), 0 0 1px rgba(251,191,36,0.25)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
         }}
       >
         {/* Background: dark green tactical board + pitch lines */}
         <div
           className="absolute inset-0"
           style={{
-            background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 50%, #050e0a 100%)",
+            background: "radial-gradient(ellipse at 50% 40%, #0d2218 0%, #081410 55%, #050e0a 100%)",
           }}
         />
+        {/* Glass layer on top of pitch bg */}
+        <div className="absolute inset-0" style={{
+          background: "rgba(5,14,10,0.35)",
+        }} />
+        {/* Amber color wash from top-left corner */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 90% 80% at 0% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)",
+        }} />
+        {/* Gloss sheen */}
+        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+          height: "30%",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
+          borderRadius: "12px 12px 0 0",
+        }} />
         <PitchLines />
 
         {/* Content over background */}
@@ -519,7 +572,7 @@ function PlayerDetail({ player, onBack }: { player: Player; onBack: () => void }
           {/* Header */}
           <div
             className="border-b border-amber-500/15 px-4 py-3 flex items-center justify-between"
-            style={{ background: "rgba(0,0,0,0.4)" }}
+            style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(255,255,255,0.08)" }}
           >
             <div className="flex items-center gap-2">
               {/* Pulsing green dot — AI active */}
