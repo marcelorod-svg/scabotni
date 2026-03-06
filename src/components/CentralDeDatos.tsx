@@ -176,7 +176,7 @@ function TeamCard({
           ? `linear-gradient(135deg, rgba(13,17,23,0.96) 0%, rgba(10,14,20,0.99) 100%)`
           : "rgba(13, 17, 23, 0.55)",
         boxShadow: isMobile
-          ? `inset 0 0 0 1px rgba(255,255,255,0.04), inset 3px 0 0 0 ${from}70, 0 1px 8px rgba(0,0,0,0.4)`
+          ? `inset 0 0 0 1px rgba(255,255,255,0.04), 0 1px 8px rgba(0,0,0,0.4)`
           : "0 4px 24px rgba(0,0,0,0.4)",
         ...(isMobile ? {} : {
           backdropFilter: "blur(10px)",
