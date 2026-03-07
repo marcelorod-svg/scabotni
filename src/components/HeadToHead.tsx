@@ -999,7 +999,7 @@ export default function HeadToHead() {
                       <StatRow label="G/PJ" valueA={parseFloat((teamA!.goals_for / Math.max(teamA!.played, 1)).toFixed(2))}
                         valueB={parseFloat((teamB!.goals_for / Math.max(teamB!.played, 1)).toFixed(2))} />
                       <StatRow label="Títulos" valueA={teamA!.titles} valueB={teamB!.titles} />
-                      <StatRow label="Finales" valueA={teamA!.finals} valueB={teamB!.finals} />
+                      <StatRow label="Semifinales" valueA={teamA!.semifinals} valueB={teamB!.semifinals} />
                       <StatRow label="G. concedidos" valueA={teamA!.goals_against} valueB={teamB!.goals_against}
                         higherIsBetter={false} />
                     </div>
