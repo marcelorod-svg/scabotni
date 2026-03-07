@@ -13,6 +13,7 @@ import EgoCheckModal from "@/components/EgoCheckModal";
 import BottomNav, { type TabId } from "@/components/BottomNav";
 import CentralDeDatos from "@/components/CentralDeDatos";
 import Vestuario from "@/components/Vestuario";
+import HeadToHead from "@/components/HeadToHead";
 import { mockMatches } from "@/lib/mockData";
 import { getManagerPrediction } from "@/lib/managers";
 import type { Match, Manager, UserPrediction } from "@/lib/types";
@@ -324,6 +325,19 @@ export default function Home() {
               transition={tabTransition}
             >
               <Vestuario />
+            </motion.div>
+          )}
+
+          {activeTab === "headtohead" && (
+            <motion.div
+              key="headtohead"
+              variants={tabVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={tabTransition}
+            >
+              <HeadToHead />
             </motion.div>
           )}
 
