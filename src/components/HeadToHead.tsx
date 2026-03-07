@@ -386,7 +386,54 @@ function CoachBubble({
   );
 }
 
+// ─── COACH CHIP ──────────────────────────────────────────────
+
+function CoachChip({
+  coach, isSelected, isDisabled, onToggle,
+}: {
+  coach: DBCoachPersonality;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onToggle: () => void;
+}) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <button
+      onClick={onToggle}
+      disabled={isDisabled}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all"
+      style={{
+        background: isSelected ? "rgba(245,185,66,0.15)" : "rgba(255,255,255,0.04)",
+        border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.08)",
+        opacity: isDisabled ? 0.4 : 1,
+      }}
+    >
+      <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0"
+        style={{ border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.1)" }}>
+        {!failed ? (
+          <img src={coach.avatar_file} alt={coach.name} width={20} height={20}
+            className="w-full h-full object-cover object-top"
+            onError={() => setFailed(true)} loading="lazy" />
+        ) : (
+          <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+            <span className="text-[7px] font-black text-amber-400">{coach.initials}</span>
+          </div>
+        )}
+      </div>
+      <span className={`text-[10px] font-bold ${isSelected ? "text-amber-400" : "text-slate-500"}`}>
+        {coach.name}
+      </span>
+      {isSelected && (
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}
+          className="text-amber-400 text-[8px]">✓</motion.span>
+      )}
+    </button>
+  );
+}
+
 // ─── DT PICKER ───────────────────────────────────────────────
+
+type TeamStats = { played: number; won: number; drawn: number; lost: number; goals_for: number; goals_against: number; titles: number };
 
 function DTSection({
   coaches,
@@ -399,9 +446,9 @@ function DTSection({
   coaches: DBCoachPersonality[];
   teamA: DBTeam;
   teamB: DBTeam;
-  simResult: { resultA: number; resultB: number; probA: number; probB: number; probDraw: number } | null;
-  teamAStats: { played: number; won: number; drawn: number; lost: number; goals_for: number; goals_against: number; titles: number } | null;
-  teamBStats: typeof teamAStats;
+  simResult: SimResult | null;
+  teamAStats: TeamStats | null;
+  teamBStats: TeamStats | null;
 }) {
   const [selectedCoachIds, setSelectedCoachIds] = useState<string[]>([]);
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -480,44 +527,19 @@ function DTSection({
       {/* Coach chips */}
       <div className="p-3">
         <div className="flex flex-wrap gap-2">
-          {coaches.map((coach) => {
-            const isSelected = selectedCoachIds.includes(coach.id);
-            const isDisabled = !isSelected && selectedCoachIds.length >= 3;
-            const [failed, setFailed] = useState(false);
-            return (
-              <button
-                key={coach.id}
-                onClick={() => !isDisabled && toggleCoach(coach.id)}
-                disabled={isDisabled}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all"
-                style={{
-                  background: isSelected ? "rgba(245,185,66,0.15)" : "rgba(255,255,255,0.04)",
-                  border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                  opacity: isDisabled ? 0.4 : 1,
-                }}
-              >
-                <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0"
-                  style={{ border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.1)" }}>
-                  {!failed ? (
-                    <img src={coach.avatar_file} alt={coach.name} width={20} height={20}
-                      className="w-full h-full object-cover object-top"
-                      onError={() => setFailed(true)} loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                      <span className="text-[7px] font-black text-amber-400">{coach.initials}</span>
-                    </div>
-                  )}
-                </div>
-                <span className={`text-[10px] font-bold ${isSelected ? "text-amber-400" : "text-slate-500"}`}>
-                  {coach.name}
-                </span>
-                {isSelected && (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="text-amber-400 text-[8px]">✓</motion.span>
-                )}
-              </button>
-            );
-          })}
+          {coaches.map((coach) => (
+            <CoachChip
+              key={coach.id}
+              coach={coach}
+              isSelected={selectedCoachIds.includes(coach.id)}
+              isDisabled={!selectedCoachIds.includes(coach.id) && selectedCoachIds.length >= 3}
+              onToggle={() => {
+                const isSelected = selectedCoachIds.includes(coach.id);
+                const isDisabled = !isSelected && selectedCoachIds.length >= 3;
+                if (!isDisabled) toggleCoach(coach.id);
+              }}
+            />
+          ))}
         </div>
 
         {selectedCoachIds.length > 0 && (
@@ -589,24 +611,31 @@ function DTSection({
   );
 }
 
+// ─── TIPO SimResult ───────────────────────────────────────────
+
+type SimResult = {
+  resultA: number; resultB: number;
+  probA: number; probB: number; probDraw: number;
+};
+
 // ─── SIMULACIÓN ───────────────────────────────────────────────
 
 function SimulationPanel({
   teamA,
   teamB,
+  onResult,
 }: {
   teamA: DBTeam;
   teamB: DBTeam;
+  onResult: (r: SimResult | null) => void;
 }) {
-  const [simResult, setSimResult] = useState<{
-    resultA: number; resultB: number;
-    probA: number; probB: number; probDraw: number;
-  } | null>(null);
+  const [simResult, setSimResult] = useState<SimResult | null>(null);
   const [simulating, setSimulating] = useState(false);
 
   async function handleSimulate() {
     setSimulating(true);
     setSimResult(null);
+    onResult(null);
     try {
       const res = await fetch("/api/simulate", {
         method: "POST",
@@ -614,7 +643,9 @@ function SimulationPanel({
         body: JSON.stringify({ teamA: teamA.id, teamB: teamB.id }),
       });
       const data = await res.json();
-      setSimResult({ resultA: data.resultA, resultB: data.resultB, probA: data.probA, probB: data.probB, probDraw: data.probDraw });
+      const r: SimResult = { resultA: data.resultA, resultB: data.resultB, probA: data.probA, probB: data.probB, probDraw: data.probDraw };
+      setSimResult(r);
+      onResult(r);
     } catch {
       // silencioso
     } finally {
@@ -630,7 +661,6 @@ function SimulationPanel({
 
   return (
     <div className="space-y-3">
-      {/* Botón simular */}
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={handleSimulate}
@@ -662,7 +692,6 @@ function SimulationPanel({
         </div>
       </motion.button>
 
-      {/* Resultado */}
       <AnimatePresence>
         {simResult && (
           <motion.div
@@ -675,12 +704,9 @@ function SimulationPanel({
               <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }}
                 className="w-2 h-2 rounded-full bg-emerald-400"
                 style={{ boxShadow: "0 0 6px #34d39980" }} />
-              <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
-                Resultado simulado · IA
-              </span>
+              <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Resultado simulado · IA</span>
             </div>
             <div className="px-4 py-5">
-              {/* Marcador */}
               <div className="flex items-center justify-center gap-6 mb-4">
                 <div className="flex flex-col items-center gap-1.5">
                   <FlagImg code={teamA.flag_code} className="w-10 h-[26px] rounded-[3px]" />
@@ -707,7 +733,6 @@ function SimulationPanel({
                   </span>
                 </div>
               )}
-              {/* Probabilidades */}
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label: teamA.name, prob: simResult.probA, color: "text-amber-400" },
@@ -724,19 +749,8 @@ function SimulationPanel({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Retornar simResult para que el DTSection lo use */}
-      {simResult && <SimResultContext result={simResult} />}
     </div>
   );
-}
-
-// Helper para pasar simResult al padre (pattern simple)
-function SimResultContext({ result }: { result: any }) {
-  useEffect(() => {
-    window.__scabotni_lastSim = result;
-  }, [result]);
-  return null;
 }
 
 // ─── MODO 2 PLACEHOLDER ───────────────────────────────────────
@@ -778,6 +792,7 @@ export default function HeadToHead() {
   const [h2hRecord, setH2HRecord] = useState<DBH2HRecord | null>(null);
   const [h2hMatches, setH2HMatches] = useState<DBH2HMatch[]>([]);
   const [loadingH2H, setLoadingH2H] = useState(false);
+  const [simResult, setSimResult] = useState<SimResult | null>(null);
 
   // Cargar datos
   useEffect(() => {
@@ -801,6 +816,7 @@ export default function HeadToHead() {
     if (!teamA || !teamB) return;
     setH2HRecord(null);
     setH2HMatches([]);
+    setSimResult(null);
 
     async function loadH2H() {
       setLoadingH2H(true);
@@ -997,7 +1013,7 @@ export default function HeadToHead() {
               {bothSelected && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }} transition={{ duration: 0.25, delay: 0.05 }}>
-                  <SimulationPanel teamA={teamA!} teamB={teamB!} />
+                  <SimulationPanel teamA={teamA!} teamB={teamB!} onResult={setSimResult} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1011,7 +1027,7 @@ export default function HeadToHead() {
                     coaches={coaches}
                     teamA={teamA!}
                     teamB={teamB!}
-                    simResult={null}
+                    simResult={simResult}
                     teamAStats={{
                       played: teamA!.played, won: teamA!.won, drawn: teamA!.drawn, lost: teamA!.lost,
                       goals_for: teamA!.goals_for, goals_against: teamA!.goals_against, titles: teamA!.titles,
