@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/useMobilePerf";
 
-export type TabId = "predictions" | "central" | "vestuario";
+export type TabId = "predictions" | "central" | "vestuario" | "headtohead";
 
 interface BottomNavProps {
   activeTab: TabId;
@@ -38,6 +38,16 @@ const tabs = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
         <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
+      </svg>
+    ),
+  },
+  {
+    id: "headtohead" as TabId,
+    label: "Head to Head",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" />
+        <path d="M9 12h6M12 9v6" />
       </svg>
     ),
   },
