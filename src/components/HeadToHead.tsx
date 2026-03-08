@@ -695,8 +695,6 @@ setH2HSummary({
   finals_played: d.finals_played ?? [],
   all_matches: d.all_matches ?? [],
 })
-
-        });
       } catch { setH2HSummary(null); } finally { setLoadingH2H(false); }
     }
     loadH2H();
