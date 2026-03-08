@@ -260,14 +260,13 @@ function TeamSelector({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 10 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="fixed left-3 right-3 z-50 rounded-2xl overflow-hidden flex flex-col min-h-0"
-              style={{
-                top: "50%",
-                transform: "translateY(-50%)",
-                height: "80vh",
-                background: "rgba(8,12,18,0.99)",
-                border: `1px solid ${sc.border}`,
-                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
+              className="fixed left-3 right-3 top-[10vh] bottom-[10vh] z-50 rounded-2xl overflow-hidden flex flex-col min-h-0"
+style={{
+  background: "rgba(8,12,18,0.99)",
+  border: `1px solid ${sc.border}`,
+  boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
+}}
+,
               }}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
@@ -304,7 +303,11 @@ function TeamSelector({
                   );
                 })}
               </div>
-              <div className="overflow-y-auto flex-1 min-h-0 p-3" style={{ scrollbarWidth: "thin" }}>
+              <div
+  className="overflow-y-auto flex-1 min-h-0 p-3"
+  style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" as const }}
+>
+
                 <div className="grid grid-cols-6 gap-2">
                   {(grouped[activeConf] ?? []).map((team) => {
                     const isSel = selected?.id === team.id;
