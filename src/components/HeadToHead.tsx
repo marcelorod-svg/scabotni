@@ -662,43 +662,55 @@ export default function HeadToHead() {
   }, []);
 
   useEffect(() => {
-    if (!teamA || !teamB) return;
-    setH2HSummary(null); setSimResult(null);
-    async function loadH2H() {
-      setLoadingH2H(true);
-      try {
-const { data, error } = await supabase
-  .rpc("get_h2h_summary", { team_a: teamA.id, team_b: teamB.id })
-  .single()
+  if (!teamA || !teamB) return
 
-if (error || !data) {
+  const teamAId = teamA.id
+  const teamBId = teamB.id
+
   setH2HSummary(null)
-  return
-}
+  setSimResult(null)
 
-const d = data as Partial<H2HSummary>
+  async function loadH2H() {
+    setLoadingH2H(true)
+    try {
+      const { data, error } = await supabase
+        .rpc("get_h2h_summary", { team_a: teamAId, team_b: teamBId })
+        .single()
 
-setH2HSummary({
-  played: d.played ?? 0,
-  wins_a: d.wins_a ?? 0,
-  wins_b: d.wins_b ?? 0,
-  draws: d.draws ?? 0,
-  goals_a: d.goals_a ?? 0,
-  goals_b: d.goals_b ?? 0,
-  last_year: d.last_year ?? null,
-  last_stage: d.last_stage ?? null,
-  last_score_a: d.last_score_a ?? null,
-  last_score_b: d.last_score_b ?? null,
-  last_winner: d.last_winner ?? null,
-  eliminations_a: d.eliminations_a ?? [],
-  eliminations_b: d.eliminations_b ?? [],
-  finals_played: d.finals_played ?? [],
-  all_matches: d.all_matches ?? [],
-})
-      } catch { setH2HSummary(null); } finally { setLoadingH2H(false); }
+      if (error || !data) {
+        setH2HSummary(null)
+        return
+      }
+
+      const d = data as Partial<H2HSummary>
+
+      setH2HSummary({
+        played: d.played ?? 0,
+        wins_a: d.wins_a ?? 0,
+        wins_b: d.wins_b ?? 0,
+        draws: d.draws ?? 0,
+        goals_a: d.goals_a ?? 0,
+        goals_b: d.goals_b ?? 0,
+        last_year: d.last_year ?? null,
+        last_stage: d.last_stage ?? null,
+        last_score_a: d.last_score_a ?? null,
+        last_score_b: d.last_score_b ?? null,
+        last_winner: d.last_winner ?? null,
+        eliminations_a: d.eliminations_a ?? [],
+        eliminations_b: d.eliminations_b ?? [],
+        finals_played: d.finals_played ?? [],
+        all_matches: d.all_matches ?? [],
+      })
+    } catch {
+      setH2HSummary(null)
+    } finally {
+      setLoadingH2H(false)
     }
-    loadH2H();
-  }, [teamA, teamB]);
+  }
+
+  loadH2H()
+}, [teamA, teamB])
+;
 
   const bothSelected = teamA && teamB;
 
