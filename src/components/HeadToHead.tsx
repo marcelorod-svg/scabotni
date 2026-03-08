@@ -266,17 +266,18 @@ function TeamSelector({
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.97, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 10 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="fixed left-3 right-3 top-[10vh] bottom-[10vh] z-50 rounded-2xl overflow-hidden flex flex-col min-h-0"
-              style={{
-                background: "rgba(8,12,18,0.99)",
-                border: `1px solid ${sc.border}`,
-                boxShadow: isMobile ? "none" : `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
-              }}
-            >
+  initial={isMobile ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 10 }}
+  animate={isMobile ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+  exit={isMobile ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 10 }}
+  transition={isMobile ? { duration: 0.08 } : { duration: 0.18, ease: "easeOut" }}
+  className="fixed left-3 right-3 top-[10vh] bottom-[10vh] z-50 rounded-2xl overflow-hidden flex flex-col min-h-0"
+  style={{
+    background: "rgba(8,12,18,0.99)",
+    border: `1px solid ${sc.border}`,
+    boxShadow: isMobile ? "none" : `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
+  }}
+>
+
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
                 <div>
                   <div className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Seleccioná un equipo</div>
@@ -455,7 +456,7 @@ function H2HRecord({ summary, teamA, teamB }: { summary: H2HSummary | null; team
             {eliminations_a.map((e, i) => (
               <div key={`a-${i}`} className="flex items-center gap-2">
                 <FlagImg code={teamA.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
-                <span className="text-[10px] font-bold" text-white">
+                <span className="text-[10px] font-bold text-white">
                   {teamA.name} eliminó a {teamB.name}
                 </span>
                 <span className="ml-auto text-[9px] font-mono text-slate-500">
@@ -467,7 +468,7 @@ function H2HRecord({ summary, teamA, teamB }: { summary: H2HSummary | null; team
             {eliminations_b.map((e, i) => (
               <div key={`b-${i}`} className="flex items-center gap-2">
                 <FlagImg code={teamB.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
-                <span className="text-[10px] font-bold" text-white">
+                <span className="text-[10px] font-bold text-white">
                   {teamB.name} eliminó a {teamA.name}
                 </span>
                 <span className="ml-auto text-[9px] font-mono text-slate-500">
