@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import type {
@@ -26,7 +26,7 @@ function FlagImg({ code, className }: { code: string; className?: string }) {
   );
 }
 
-// ─── TYPEWRITER HOOK (igual que Vestuario) ────────────────────
+// ─── TYPEWRITER HOOK ─────────────────────────────────────────
 
 function useTypewriter(text: string, speed = 18, startDelay = 0) {
   const [displayed, setDisplayed] = useState("");
@@ -45,7 +45,19 @@ function useTypewriter(text: string, speed = 18, startDelay = 0) {
   return { displayed, done };
 }
 
-// ─── TEAM SELECTOR ────────────────────────────────────────────
+// ─── CONFEDERATION ORDER ──────────────────────────────────────
+
+const CONF_ORDER = ["CONMEBOL", "UEFA", "CONCACAF", "CAF", "AFC", "OFC"];
+const CONF_COLORS: Record<string, string> = {
+  CONMEBOL: "#f5b942",
+  UEFA:     "#60a5fa",
+  CONCACAF: "#34d399",
+  CAF:      "#f87171",
+  AFC:      "#a78bfa",
+  OFC:      "#94a3b8",
+};
+
+// ─── TEAM SELECTOR (Flag Grid — sin teclado) ──────────────────
 
 function TeamSelector({
   teams,
@@ -53,42 +65,52 @@ function TeamSelector({
   onSelect,
   label,
   exclude,
+  side,
 }: {
   teams: DBTeam[];
   selected: DBTeam | null;
   onSelect: (t: DBTeam) => void;
   label: string;
   exclude?: string;
+  side: "A" | "B";
 }) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [activeConf, setActiveConf] = useState<string>("CONMEBOL");
 
-  const filtered = teams
-    .filter((t) => t.id !== exclude)
-    .filter((t) => t.name.toLowerCase().includes(query.toLowerCase()));
+  const accentColor = side === "A" ? "#f5b942" : "#60a5fa";
+  const accentBg    = side === "A" ? "rgba(245,185,66,0.15)"  : "rgba(96,165,250,0.15)";
+  const accentBorder= side === "A" ? "rgba(245,185,66,0.4)"   : "rgba(96,165,250,0.4)";
 
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 80);
-  }, [open]);
+  const available = teams.filter((t) => t.id !== exclude);
+  const grouped = CONF_ORDER.reduce((acc, conf) => {
+    acc[conf] = available.filter((t) => t.confederation === conf);
+    return acc;
+  }, {} as Record<string, DBTeam[]>);
+
+  function handleSelect(team: DBTeam) {
+    onSelect(team);
+    setOpen(false);
+  }
 
   return (
     <div className="relative flex-1">
       <div className={`text-[9px] uppercase tracking-widest mb-1.5 ${LABEL_CLASS}`}>{label}</div>
+
+      {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors text-left"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all text-left"
         style={{
           background: "rgba(13,17,23,0.97)",
-          border: selected
-            ? "1px solid rgba(245,185,66,0.3)"
-            : "1px solid rgba(255,255,255,0.08)",
+          border: selected ? `1px solid ${accentBorder}` : "1px solid rgba(255,255,255,0.08)",
         }}
       >
         {selected ? (
           <>
             <FlagImg code={selected.flag_code} className="w-7 h-[17px] rounded-[2px] flex-shrink-0" />
-            <span className="text-sm font-bold text-white truncate">{selected.name}</span>
+            <span className="text-sm font-bold truncate" style={{ color: accentColor }}>
+              {selected.name}
+            </span>
           </>
         ) : (
           <span className="text-sm text-slate-600 font-mono">Elegir equipo…</span>
@@ -99,58 +121,136 @@ function TeamSelector({
         </svg>
       </button>
 
+      {/* Modal — Flag Grid */}
       <AnimatePresence>
         {open && (
           <>
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/60"
-              onClick={() => { setOpen(false); setQuery(""); }}
+              className="fixed inset-0 z-40"
+              style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+              onClick={() => setOpen(false)}
             />
+
+            {/* Panel */}
             <motion.div
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.15 }}
-              className="fixed left-4 right-4 z-50 rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 10 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="fixed left-3 right-3 z-50 rounded-2xl overflow-hidden flex flex-col"
               style={{
-                top: "50%", transform: "translateY(-50%)",
-                background: "rgba(10,14,20,0.99)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                boxShadow: "0 24px 48px rgba(0,0,0,0.7)",
-                maxHeight: "70vh",
+                top: "50%",
+                transform: "translateY(-50%)",
+                maxHeight: "80vh",
+                background: "rgba(8,12,18,0.99)",
+                border: `1px solid ${accentBorder}`,
+                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${accentBg}`,
               }}
             >
-              <div className="p-3 border-b border-slate-800">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800">
-                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}
-                    className="w-3.5 h-3.5 text-slate-600 flex-shrink-0">
-                    <circle cx="6.5" cy="6.5" r="4" />
-                    <path d="M10 10l3 3" strokeLinecap="round" />
-                  </svg>
-                  <input
-                    ref={inputRef}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Buscar selección…"
-                    className="flex-1 bg-transparent text-sm text-white placeholder-slate-600 outline-none font-mono"
-                  />
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+                <div>
+                  <div className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
+                    Seleccioná un equipo
+                  </div>
+                  <div className="text-sm font-black text-white mt-0.5">{label}</div>
                 </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "#64748b" }}
+                >
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                    <path d="M3 3l10 10M13 3L3 13" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
-              <div className="overflow-y-auto" style={{ maxHeight: "calc(70vh - 70px)" }}>
-                {filtered.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-slate-600 text-sm font-mono">Sin resultados</div>
-                ) : (
-                  filtered.map((team) => (
+
+              {/* Confederation tabs */}
+              <div className="flex gap-1 px-3 py-2.5 border-b border-slate-800/60 overflow-x-auto flex-shrink-0"
+                style={{ scrollbarWidth: "none" }}>
+                {CONF_ORDER.map((conf) => {
+                  const count = grouped[conf]?.length ?? 0;
+                  if (count === 0) return null;
+                  const isActive = activeConf === conf;
+                  const confColor = CONF_COLORS[conf];
+                  return (
                     <button
-                      key={team.id}
-                      onClick={() => { onSelect(team); setOpen(false); setQuery(""); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-slate-900"
+                      key={conf}
+                      onClick={() => setActiveConf(conf)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
+                      style={{
+                        background: isActive ? `${confColor}18` : "transparent",
+                        border: isActive ? `1px solid ${confColor}50` : "1px solid transparent",
+                      }}
                     >
-                      <FlagImg code={team.flag_code} className="w-7 h-[17px] rounded-[2px] flex-shrink-0" />
-                      <span className="text-sm text-white font-semibold">{team.name}</span>
-                      <span className={`text-[10px] ml-auto ${LABEL_CLASS}`}>{team.confederation}</span>
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider"
+                        style={{ color: isActive ? confColor : "#475569" }}>
+                        {conf}
+                      </span>
+                      <span className="text-[8px] font-mono tabular-nums"
+                        style={{ color: isActive ? `${confColor}99` : "#334155" }}>
+                        {count}
+                      </span>
                     </button>
-                  ))
-                )}
+                  );
+                })}
+              </div>
+
+              {/* Flag grid */}
+              <div className="overflow-y-auto flex-1 p-3" style={{ scrollbarWidth: "thin" }}>
+                <div className="grid grid-cols-6 gap-2">
+                  {(grouped[activeConf] ?? []).map((team) => {
+                    const isSelected = selected?.id === team.id;
+                    return (
+                      <motion.button
+                        key={team.id}
+                        onClick={() => handleSelect(team)}
+                        whileTap={{ scale: 0.93 }}
+                        className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all"
+                        style={{
+                          background: isSelected ? accentBg : "rgba(255,255,255,0.03)",
+                          border: isSelected
+                            ? `1px solid ${accentBorder}`
+                            : "1px solid rgba(255,255,255,0.05)",
+                          boxShadow: isSelected ? `0 0 12px ${accentBg}` : "none",
+                        }}
+                      >
+                        {/* Flag */}
+                        <div className="relative">
+                          <FlagImg
+                            code={team.flag_code}
+                            className="w-9 h-6 rounded-[3px] object-cover"
+                          />
+                          {isSelected && (
+                            <motion.div
+                              initial={{ scale: 0 }} animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                              style={{ background: accentColor }}
+                            >
+                              <svg viewBox="0 0 10 10" fill="none" className="w-2 h-2">
+                                <path d="M2 5l2 2 4-4" stroke="#000" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </motion.div>
+                          )}
+                        </div>
+                        {/* Country name */}
+                        <span
+                          className="text-[8px] font-bold text-center leading-tight line-clamp-2"
+                          style={{
+                            color: isSelected ? accentColor : "#64748b",
+                            wordBreak: "break-word",
+                            hyphens: "auto",
+                          }}
+                        >
+                          {team.name}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           </>
@@ -319,15 +419,9 @@ function StatRow({
 // ─── TYPEWRITER BUBBLE (DT) ───────────────────────────────────
 
 function CoachBubble({
-  coach,
-  comment,
-  delay,
-  isRight,
+  coach, comment, delay, isRight,
 }: {
-  coach: DBCoachPersonality;
-  comment: string;
-  delay: number;
-  isRight: boolean;
+  coach: DBCoachPersonality; comment: string; delay: number; isRight: boolean;
 }) {
   const { displayed, done } = useTypewriter(comment, 18, delay);
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -339,7 +433,6 @@ function CoachBubble({
       transition={{ delay: delay / 1000, duration: 0.35, ease: "easeOut" }}
       className={`flex items-start gap-3 ${isRight ? "flex-row-reverse" : "flex-row"}`}
     >
-      {/* Avatar */}
       <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden"
         style={{ border: "2px solid rgba(245,185,66,0.4)", boxShadow: "0 0 10px rgba(245,185,66,0.2)" }}>
         {!avatarFailed ? (
@@ -352,8 +445,6 @@ function CoachBubble({
           </div>
         )}
       </div>
-
-      {/* Burbuja */}
       <div className="flex-1 min-w-0">
         <div className={`flex items-baseline gap-2 mb-1.5 ${isRight ? "flex-row-reverse" : ""}`}>
           <span className="text-[11px] font-bold text-amber-400 tracking-tight">{coach.name}</span>
@@ -391,10 +482,7 @@ function CoachBubble({
 function CoachChip({
   coach, isSelected, isDisabled, onToggle,
 }: {
-  coach: DBCoachPersonality;
-  isSelected: boolean;
-  isDisabled: boolean;
-  onToggle: () => void;
+  coach: DBCoachPersonality; isSelected: boolean; isDisabled: boolean; onToggle: () => void;
 }) {
   const [failed, setFailed] = useState(false);
   return (
@@ -431,17 +519,22 @@ function CoachChip({
   );
 }
 
-// ─── DT PICKER ───────────────────────────────────────────────
+// ─── TIPOS ────────────────────────────────────────────────────
 
-type TeamStats = { played: number; won: number; drawn: number; lost: number; goals_for: number; goals_against: number; titles: number };
+type TeamStats = {
+  played: number; won: number; drawn: number; lost: number;
+  goals_for: number; goals_against: number; titles: number;
+};
+
+type SimResult = {
+  resultA: number; resultB: number;
+  probA: number; probB: number; probDraw: number;
+};
+
+// ─── DT SECTION ──────────────────────────────────────────────
 
 function DTSection({
-  coaches,
-  teamA,
-  teamB,
-  simResult,
-  teamAStats,
-  teamBStats,
+  coaches, teamA, teamB, simResult, teamAStats, teamBStats, h2hRecord, h2hMatches,
 }: {
   coaches: DBCoachPersonality[];
   teamA: DBTeam;
@@ -449,17 +542,46 @@ function DTSection({
   simResult: SimResult | null;
   teamAStats: TeamStats | null;
   teamBStats: TeamStats | null;
+  h2hRecord: DBH2HRecord | null;
+  h2hMatches: DBH2HMatch[];
 }) {
   const [selectedCoachIds, setSelectedCoachIds] = useState<string[]>([]);
   const [comments, setComments] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
+  // Build H2H context string for the prompt
+  function buildH2HContext(): string {
+    if (!h2hRecord) {
+      return `No hay antecedentes entre ${teamA.name} y ${teamB.name} en Mundiales. Sería su primer enfrentamiento.`;
+    }
+    const aIsA = teamA.id < teamB.id;
+    const winsA = aIsA ? h2hRecord.team_a_wins : h2hRecord.team_b_wins;
+    const winsB = aIsA ? h2hRecord.team_b_wins : h2hRecord.team_a_wins;
+    const goalsA = aIsA ? h2hRecord.team_a_goals : h2hRecord.team_b_goals;
+    const goalsB = aIsA ? h2hRecord.team_b_goals : h2hRecord.team_a_goals;
+
+    let ctx = `HISTORIAL EN MUNDIALES entre ${teamA.name} vs ${teamB.name}: `;
+    ctx += `${h2hRecord.played} partido(s). `;
+    ctx += `${teamA.name} ganó ${winsA}, ${teamB.name} ganó ${winsB}, ${h2hRecord.draws} empate(s). `;
+    ctx += `Goles: ${teamA.name} ${goalsA} - ${teamB.name} ${goalsB}. `;
+
+    if (h2hMatches.length > 0) {
+      ctx += "Partidos: ";
+      ctx += h2hMatches.slice(0, 4).map((m) => {
+        const aIsA2 = m.team_a_id === teamA.id;
+        const gA = aIsA2 ? m.team_a_goals : m.team_b_goals;
+        const gB = aIsA2 ? m.team_b_goals : m.team_a_goals;
+        return `${m.year} (${m.stage || "Mundial"}) ${teamA.name} ${gA}-${gB} ${teamB.name}`;
+      }).join("; ") + ".";
+    }
+    return ctx;
+  }
+
   function toggleCoach(id: string) {
     setSelectedCoachIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 3 ? [...prev, id] : prev
     );
-    // Reset si cambia la selección
     setRevealed(false);
     setComments({});
   }
@@ -470,7 +592,9 @@ function DTSection({
     setRevealed(true);
     setComments({});
 
+    const h2hContext = buildH2HContext();
     const selected = coaches.filter((c) => selectedCoachIds.includes(c.id));
+
     const results = await Promise.all(
       selected.map(async (coach) => {
         try {
@@ -483,6 +607,7 @@ function DTSection({
               teamBName: teamB.name,
               teamAStats,
               teamBStats,
+              h2hContext,
               resultA: simResult?.resultA ?? null,
               resultB: simResult?.resultB ?? null,
               probA: simResult?.probA ?? null,
@@ -511,7 +636,6 @@ function DTSection({
     <div className="rounded-2xl overflow-hidden"
       style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
 
-      {/* Header */}
       <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-2">
         <motion.div
           animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }}
@@ -524,7 +648,6 @@ function DTSection({
         </span>
       </div>
 
-      {/* Coach chips */}
       <div className="p-3">
         <div className="flex flex-wrap gap-2">
           {coaches.map((coach) => (
@@ -568,7 +691,6 @@ function DTSection({
         )}
       </div>
 
-      {/* Burbujas typewriter */}
       <AnimatePresence>
         {revealed && (
           <motion.div
@@ -611,23 +733,12 @@ function DTSection({
   );
 }
 
-// ─── TIPO SimResult ───────────────────────────────────────────
-
-type SimResult = {
-  resultA: number; resultB: number;
-  probA: number; probB: number; probDraw: number;
-};
-
-// ─── SIMULACIÓN ───────────────────────────────────────────────
+// ─── SIMULATION PANEL ─────────────────────────────────────────
 
 function SimulationPanel({
-  teamA,
-  teamB,
-  onResult,
+  teamA, teamB, onResult,
 }: {
-  teamA: DBTeam;
-  teamB: DBTeam;
-  onResult: (r: SimResult | null) => void;
+  teamA: DBTeam; teamB: DBTeam; onResult: (r: SimResult | null) => void;
 }) {
   const [simResult, setSimResult] = useState<SimResult | null>(null);
   const [simulating, setSimulating] = useState(false);
@@ -643,14 +754,14 @@ function SimulationPanel({
         body: JSON.stringify({ teamA: teamA.id, teamB: teamB.id }),
       });
       const data = await res.json();
-      const r: SimResult = { resultA: data.resultA, resultB: data.resultB, probA: data.probA, probB: data.probB, probDraw: data.probDraw };
+      const r: SimResult = {
+        resultA: data.resultA, resultB: data.resultB,
+        probA: data.probA, probB: data.probB, probDraw: data.probDraw,
+      };
       setSimResult(r);
       onResult(r);
-    } catch {
-      // silencioso
-    } finally {
-      setSimulating(false);
-    }
+    } catch { /* silencioso */ }
+    finally { setSimulating(false); }
   }
 
   const winner = simResult
@@ -794,7 +905,6 @@ export default function HeadToHead() {
   const [loadingH2H, setLoadingH2H] = useState(false);
   const [simResult, setSimResult] = useState<SimResult | null>(null);
 
-  // Cargar datos
   useEffect(() => {
     async function loadData() {
       try {
@@ -811,7 +921,6 @@ export default function HeadToHead() {
     loadData();
   }, []);
 
-  // Cargar H2H al seleccionar ambos
   useEffect(() => {
     if (!teamA || !teamB) return;
     setH2HRecord(null);
@@ -865,8 +974,8 @@ export default function HeadToHead() {
       <div className="flex gap-1.5 p-1 rounded-xl"
         style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
         {[
-          { key: "actual", label: "Selecciones Actuales", sub: "WC 2026 · 48 equipos" },
-          { key: "historico", label: "Históricas", sub: "Campeones · Leyendas" },
+          { key: "actual",    label: "Selecciones Actuales", sub: "WC 2026 · 48 equipos" },
+          { key: "historico", label: "Históricas",           sub: "Campeones · Leyendas" },
         ].map((m) => (
           <button
             key={m.key}
@@ -885,8 +994,9 @@ export default function HeadToHead() {
         ))}
       </div>
 
-      {/* MODO 2 */}
       <AnimatePresence mode="wait">
+
+        {/* MODO 2 */}
         {mode === "historico" && (
           <motion.div key="modo2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <Modo2Placeholder />
@@ -902,16 +1012,22 @@ export default function HeadToHead() {
             <div className="rounded-2xl p-4"
               style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <div className="flex gap-3">
-                <TeamSelector teams={teams} selected={teamA}
-                  onSelect={(t) => setTeamA(t)} label="Selección A" exclude={teamB?.id} />
+                <TeamSelector
+                  teams={teams} selected={teamA}
+                  onSelect={(t) => { setTeamA(t); }}
+                  label="Selección A" exclude={teamB?.id} side="A"
+                />
                 <div className="flex items-end pb-1">
                   <span className="text-slate-700 font-black text-lg">vs</span>
                 </div>
-                <TeamSelector teams={teams} selected={teamB}
-                  onSelect={(t) => setTeamB(t)} label="Selección B" exclude={teamA?.id} />
+                <TeamSelector
+                  teams={teams} selected={teamB}
+                  onSelect={(t) => { setTeamB(t); }}
+                  label="Selección B" exclude={teamA?.id} side="B"
+                />
               </div>
 
-              {/* Stats rápidas de ambos equipos */}
+              {/* Stats rápidas */}
               <AnimatePresence>
                 {bothSelected && (
                   <motion.div
@@ -920,16 +1036,19 @@ export default function HeadToHead() {
                     className="overflow-hidden mt-3 pt-3 border-t border-slate-900"
                   >
                     <div className="grid grid-cols-2 gap-3">
-                      {[teamA, teamB].map((team) => (
+                      {[teamA, teamB].map((team, idx) => (
                         <div key={team!.id} className="space-y-1">
                           <div className="flex items-center gap-2 mb-2">
                             <FlagImg code={team!.flag_code} className="w-5 h-[13px] rounded-[2px]" />
-                            <span className="text-[10px] font-bold text-white truncate">{team!.name}</span>
+                            <span className="text-[10px] font-bold truncate"
+                              style={{ color: idx === 0 ? "#f5b942" : "#60a5fa" }}>
+                              {team!.name}
+                            </span>
                           </div>
                           {[
                             { label: "Part.", value: team!.participations },
-                            { label: "PJ", value: team!.played },
-                            { label: "V", value: team!.won },
+                            { label: "PJ",    value: team!.played },
+                            { label: "V",     value: team!.won },
                             { label: "Títulos", value: team!.titles },
                           ].map((s) => (
                             <div key={s.label} className="flex justify-between items-center">
@@ -993,13 +1112,14 @@ export default function HeadToHead() {
                       </div>
                     </div>
                     <div className="px-4 py-2">
-                      <StatRow label="Partidos WC" valueA={teamA!.played} valueB={teamB!.played} />
-                      <StatRow label="Victorias" valueA={teamA!.won} valueB={teamB!.won} />
-                      <StatRow label="Goles" valueA={teamA!.goals_for} valueB={teamB!.goals_for} />
-                      <StatRow label="G/PJ" valueA={parseFloat((teamA!.goals_for / Math.max(teamA!.played, 1)).toFixed(2))}
+                      <StatRow label="Partidos WC" valueA={teamA!.played}       valueB={teamB!.played} />
+                      <StatRow label="Victorias"   valueA={teamA!.won}          valueB={teamB!.won} />
+                      <StatRow label="Goles"       valueA={teamA!.goals_for}    valueB={teamB!.goals_for} />
+                      <StatRow label="G/PJ"
+                        valueA={parseFloat((teamA!.goals_for / Math.max(teamA!.played, 1)).toFixed(2))}
                         valueB={parseFloat((teamB!.goals_for / Math.max(teamB!.played, 1)).toFixed(2))} />
-                      <StatRow label="Títulos" valueA={teamA!.titles} valueB={teamB!.titles} />
-                      <StatRow label="G. concedidos" valueA={teamA!.goals_against} valueB={teamB!.goals_against}
+                      <StatRow label="Títulos"       valueA={teamA!.titles}         valueB={teamB!.titles} />
+                      <StatRow label="G. concedidos" valueA={teamA!.goals_against}  valueB={teamB!.goals_against}
                         higherIsBetter={false} />
                     </div>
                   </div>
@@ -1027,6 +1147,8 @@ export default function HeadToHead() {
                     teamA={teamA!}
                     teamB={teamB!}
                     simResult={simResult}
+                    h2hRecord={h2hRecord}
+                    h2hMatches={h2hMatches}
                     teamAStats={{
                       played: teamA!.played, won: teamA!.won, drawn: teamA!.drawn, lost: teamA!.lost,
                       goals_for: teamA!.goals_for, goals_against: teamA!.goals_against, titles: teamA!.titles,
@@ -1043,7 +1165,6 @@ export default function HeadToHead() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
