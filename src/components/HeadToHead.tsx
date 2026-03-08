@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import type { DBTeam, DBCoachPersonality } from "@/lib/supabase";
+import { useIsMobile } from "@/hooks/useMobilePerf";
+
 
 const LABEL_CLASS = "text-slate-500 font-mono";
 const SIDE_COLORS = {
@@ -847,6 +849,7 @@ function Modo2Placeholder() {
 
 // ── MAIN ──────────────────────────────────────────────────────
 export default function HeadToHead() {
+  const isMobile = useIsMobile();
   const [mode, setMode] = useState<"actual" | "historico">("actual");
   const [teams, setTeams] = useState<DBTeam[]>([]);
   const [coaches, setCoaches] = useState<DBCoachPersonality[]>([]);
