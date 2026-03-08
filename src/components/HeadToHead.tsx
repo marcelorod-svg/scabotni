@@ -206,6 +206,7 @@ function TeamSelector({
   label,
   exclude,
   side,
+  isMobile,
 }: {
   teams: DBTeam[];
   selected: DBTeam | null;
@@ -213,6 +214,7 @@ function TeamSelector({
   label: string;
   exclude?: string;
   side: "A" | "B";
+  isMobile: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [activeConf, setActiveConf] = useState("CONMEBOL");
@@ -259,7 +261,7 @@ function TeamSelector({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40"
-              style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+              style={{ background: "rgba(0,0,0,0.75)", backdropFilter: isMobile ? "none" : "blur(4px)" }}
               onClick={() => setOpen(false)}
             />
 
@@ -971,7 +973,7 @@ export default function HeadToHead() {
                   }}
                   label="Selección A"
                   exclude={teamB?.id}
-                  side="A"
+                  side="A" isMobile={isMobile} />
                 />
                 <div className="flex items-end pb-1">
                   <span className="text-slate-700 font-black text-lg">vs</span>
@@ -985,7 +987,7 @@ export default function HeadToHead() {
                   }}
                   label="Selección B"
                   exclude={teamA?.id}
-                  side="B"
+                  side="B" isMobile={isMobile} />
                 />
               </div>
               <AnimatePresence>
