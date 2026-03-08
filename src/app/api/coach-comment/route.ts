@@ -24,11 +24,23 @@ export async function POST(req: NextRequest) {
       mode,
     } = await req.json()
 
-    function statsLine(name: string, s: { played: number; won: number; drawn: number; lost: number; goals_for: number; goals_against: number; titles: number } | null) {
-      if (!s) return `${name}: sin estadísticas`
-      const gpj = s.played > 0 ? (s.goals_for / s.played).toFixed(2) : '0'
-      return `${name}: ${s.played} PJ, ${s.won}V ${s.drawn}E ${s.lost}D, ${s.goals_for} goles (${gpj}/PJ), ${s.goals_against} en contra, ${s.titles} título(s)`
-    }
+    const statsLine = (
+  name: string,
+  s: {
+    played: number
+    won: number
+    drawn: number
+    lost: number
+    goals_for: number
+    goals_against: number
+    titles: number
+  } | null
+) => {
+  if (!s) return `${name}: sin estadísticas`
+  const gpj = s.played > 0 ? (s.goals_for / s.played).toFixed(2) : '0'
+  return `${name}: ${s.played} PJ, ${s.won}V ${s.drawn}E ${s.lost}D, ${s.goals_for} goles (${gpj}/PJ), ${s.goals_against} en contra, ${s.titles} título(s)`
+}
+
 
     const statsBlock = [statsLine(teamAName, teamAStats), statsLine(teamBName, teamBStats)].join('\n')
     const h2hBlock = h2hContext
