@@ -217,6 +217,7 @@ function TeamSelector({
   const sc = SIDE_COLORS[side];
   const selectedColor = selected ? getTeamColor(selected, side) : sc.text;
   const available = teams.filter((t) => t.id !== exclude);
+
   const grouped = CONF_ORDER.reduce((acc, conf) => {
     acc[conf] = available.filter((t) => t.confederation === conf);
     return acc;
@@ -228,7 +229,10 @@ function TeamSelector({
       <button
         onClick={() => setOpen(true)}
         className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
-        style={{ background: "rgba(13,17,23,0.97)", border: selected ? `1px solid ${sc.border}` : "1px solid rgba(255,255,255,0.08)" }}
+        style={{
+          background: "rgba(13,17,23,0.97)",
+          border: selected ? `1px solid ${sc.border}` : "1px solid rgba(255,255,255,0.08)",
+        }}
       >
         {selected ? (
           <>
@@ -244,6 +248,7 @@ function TeamSelector({
           <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
+
       <AnimatePresence>
         {open && (
           <>
@@ -255,17 +260,116 @@ function TeamSelector({
               style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
               onClick={() => setOpen(false)}
             />
+
             <motion.div
               initial={{ opacity: 0, scale: 0.97, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 10 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="fixed left-3 right-3 top-[10vh] bottom-[10vh] z-50 rounded-2xl overflow-hidden flex flex-col min-h-0"
-style={{
-  background: "rgba(8,12,18,0.99)",
-  border: `1px solid ${sc.border}`,
-  boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
-}}
+              style={{
+                background: "rgba(8,12,18,0.99)",
+                border: `1px solid ${sc.border}`,
+                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
+              }}
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
+                <div>
+                  <div className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Seleccioná un equipo</div>
+                  <div className="text-sm font-black text-white mt-0.5">{label}</div>
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "#64748b" }}
+                >
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                    <path d="M3 3l10 10M13 3L3 13" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex gap-1 px-3 py-2.5 border-b border-slate-800/60 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: "none" }}>
+                {CONF_ORDER.map((conf) => {
+                  const count = grouped[conf]?.length ?? 0;
+                  if (count === 0) return null;
+                  const isActive = activeConf === conf;
+                  const cc = CONF_COLORS[conf];
+                  return (
+                    <button
+                      key={conf}
+                      onClick={() => setActiveConf(conf)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
+                      style={{
+                        background: isActive ? `${cc}18` : "transparent",
+                        border: isActive ? `1px solid ${cc}50` : "1px solid transparent",
+                      }}
+                    >
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider" style={{ color: isActive ? cc : "#475569" }}>
+                        {conf}
+                      </span>
+                      <span className="text-[8px] font-mono tabular-nums" style={{ color: isActive ? `${cc}99` : "#334155" }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div
+                className="overflow-y-auto flex-1 min-h-0 p-3"
+                style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" as const }}
+              >
+                <div className="grid grid-cols-6 gap-2">
+                  {(grouped[activeConf] ?? []).map((team) => {
+                    const isSel = selected?.id === team.id;
+                    const teamColor = getTeamColor(team, side);
+                    return (
+                      <motion.button
+                        key={team.id}
+                        onClick={() => {
+                          onSelect(team);
+                          setOpen(false);
+                        }}
+                        whileTap={{ scale: 0.93 }}
+                        className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all"
+                        style={{
+                          background: isSel ? sc.bg : "rgba(255,255,255,0.03)",
+                          border: isSel ? `1px solid ${sc.border}` : "1px solid rgba(255,255,255,0.05)",
+                          boxShadow: isSel ? `0 0 12px ${sc.bg}` : "none",
+                        }}
+                      >
+                        <div className="relative">
+                          <FlagImg code={team.flag_code} className="w-9 h-6 rounded-[3px] object-cover" />
+                          {isSel && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                              style={{ background: teamColor }}
+                            >
+                              <svg viewBox="0 0 10 10" fill="none" className="w-2 h-2">
+                                <path d="M2 5l2 2 4-4" stroke="#fff" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </motion.div>
+                          )}
+                        </div>
+                        <span className="text-[8px] font-bold text-center leading-tight line-clamp-2" style={{ color: isSel ? teamColor : "#64748b", wordBreak: "break-word" }}>
+                          {team.name}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 ,
               }}
             >
