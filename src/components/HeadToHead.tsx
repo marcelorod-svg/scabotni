@@ -15,14 +15,14 @@ import { useIsMobile } from "@/hooks/useMobilePerf";
 
 const LABEL_CLASS = "text-slate-500 font-mono";
 
+const SIDE_COLORS = {
+  A: { text: "#ef4444", border: "rgba(239,68,68,0.4)", bg: "rgba(239,68,68,0.12)" },
+  B: { text: "#60a5fa", border: "rgba(96,165,250,0.4)", bg: "rgba(96,165,250,0.12)" },
+};
+
 function FlagImg({ code, className }: { code: string; className?: string }) {
   return (
-    <img
-      src={`https://flagcdn.com/${code}.svg`}
-      alt=""
-      className={className}
-      loading="lazy"
-    />
+    <img src={`https://flagcdn.com/${code}.svg`} alt="" className={className} loading="lazy" />
   );
 }
 
@@ -49,37 +49,21 @@ function useTypewriter(text: string, speed = 18, startDelay = 0) {
 
 const CONF_ORDER = ["CONMEBOL", "UEFA", "CONCACAF", "CAF", "AFC", "OFC"];
 const CONF_COLORS: Record<string, string> = {
-  CONMEBOL: "#f5b942",
-  UEFA:     "#60a5fa",
-  CONCACAF: "#34d399",
-  CAF:      "#f87171",
-  AFC:      "#a78bfa",
-  OFC:      "#94a3b8",
+  CONMEBOL: "#f5b942", UEFA: "#60a5fa", CONCACAF: "#34d399",
+  CAF: "#f87171", AFC: "#a78bfa", OFC: "#94a3b8",
 };
 
 // ─── TEAM SELECTOR (Flag Grid — sin teclado) ──────────────────
 
 function TeamSelector({
-  teams,
-  selected,
-  onSelect,
-  label,
-  exclude,
-  side,
+  teams, selected, onSelect, label, exclude, side,
 }: {
-  teams: DBTeam[];
-  selected: DBTeam | null;
-  onSelect: (t: DBTeam) => void;
-  label: string;
-  exclude?: string;
-  side: "A" | "B";
+  teams: DBTeam[]; selected: DBTeam | null; onSelect: (t: DBTeam) => void;
+  label: string; exclude?: string; side: "A" | "B";
 }) {
   const [open, setOpen] = useState(false);
-  const [activeConf, setActiveConf] = useState<string>("CONMEBOL");
-
-  const accentColor = side === "A" ? "#f5b942" : "#60a5fa";
-  const accentBg    = side === "A" ? "rgba(245,185,66,0.15)"  : "rgba(96,165,250,0.15)";
-  const accentBorder= side === "A" ? "rgba(245,185,66,0.4)"   : "rgba(96,165,250,0.4)";
+  const [activeConf, setActiveConf] = useState("CONMEBOL");
+  const sc = SIDE_COLORS[side];
 
   const available = teams.filter((t) => t.id !== exclude);
   const grouped = CONF_ORDER.reduce((acc, conf) => {
@@ -87,30 +71,21 @@ function TeamSelector({
     return acc;
   }, {} as Record<string, DBTeam[]>);
 
-  function handleSelect(team: DBTeam) {
-    onSelect(team);
-    setOpen(false);
-  }
-
   return (
     <div className="relative flex-1">
       <div className={`text-[9px] uppercase tracking-widest mb-1.5 ${LABEL_CLASS}`}>{label}</div>
-
-      {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all text-left"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
         style={{
           background: "rgba(13,17,23,0.97)",
-          border: selected ? `1px solid ${accentBorder}` : "1px solid rgba(255,255,255,0.08)",
+          border: selected ? `1px solid ${sc.border}` : "1px solid rgba(255,255,255,0.08)",
         }}
       >
         {selected ? (
           <>
             <FlagImg code={selected.flag_code} className="w-7 h-[17px] rounded-[2px] flex-shrink-0" />
-            <span className="text-sm font-bold truncate" style={{ color: accentColor }}>
-              {selected.name}
-            </span>
+            <span className="text-sm font-bold truncate" style={{ color: sc.text }}>{selected.name}</span>
           </>
         ) : (
           <span className="text-sm text-slate-600 font-mono">Elegir equipo…</span>
@@ -121,19 +96,15 @@ function TeamSelector({
         </svg>
       </button>
 
-      {/* Modal — Flag Grid */}
       <AnimatePresence>
         {open && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-40"
               style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
               onClick={() => setOpen(false)}
             />
-
-            {/* Panel */}
             <motion.div
               initial={{ opacity: 0, scale: 0.97, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -141,59 +112,46 @@ function TeamSelector({
               transition={{ duration: 0.18, ease: "easeOut" }}
               className="fixed left-3 right-3 z-50 rounded-2xl overflow-hidden flex flex-col"
               style={{
-                top: "50%",
-                transform: "translateY(-50%)",
-                maxHeight: "80vh",
+                top: "50%", transform: "translateY(-50%)", maxHeight: "80vh",
                 background: "rgba(8,12,18,0.99)",
-                border: `1px solid ${accentBorder}`,
-                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${accentBg}`,
+                border: `1px solid ${sc.border}`,
+                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
               }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
                 <div>
-                  <div className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
-                    Seleccioná un equipo
-                  </div>
+                  <div className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Seleccioná un equipo</div>
                   <div className="text-sm font-black text-white mt-0.5">{label}</div>
                 </div>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "#64748b" }}
-                >
+                <button onClick={() => setOpen(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "#64748b" }}>
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
                     <path d="M3 3l10 10M13 3L3 13" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>
 
-              {/* Confederation tabs */}
+              {/* Conf tabs */}
               <div className="flex gap-1 px-3 py-2.5 border-b border-slate-800/60 overflow-x-auto flex-shrink-0"
                 style={{ scrollbarWidth: "none" }}>
                 {CONF_ORDER.map((conf) => {
                   const count = grouped[conf]?.length ?? 0;
                   if (count === 0) return null;
                   const isActive = activeConf === conf;
-                  const confColor = CONF_COLORS[conf];
+                  const cc = CONF_COLORS[conf];
                   return (
-                    <button
-                      key={conf}
-                      onClick={() => setActiveConf(conf)}
+                    <button key={conf} onClick={() => setActiveConf(conf)}
                       className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all"
                       style={{
-                        background: isActive ? `${confColor}18` : "transparent",
-                        border: isActive ? `1px solid ${confColor}50` : "1px solid transparent",
-                      }}
-                    >
+                        background: isActive ? `${cc}18` : "transparent",
+                        border: isActive ? `1px solid ${cc}50` : "1px solid transparent",
+                      }}>
                       <span className="text-[9px] font-mono font-bold uppercase tracking-wider"
-                        style={{ color: isActive ? confColor : "#475569" }}>
-                        {conf}
-                      </span>
+                        style={{ color: isActive ? cc : "#475569" }}>{conf}</span>
                       <span className="text-[8px] font-mono tabular-nums"
-                        style={{ color: isActive ? `${confColor}99` : "#334155" }}>
-                        {count}
-                      </span>
+                        style={{ color: isActive ? `${cc}99` : "#334155" }}>{count}</span>
                     </button>
                   );
                 })}
@@ -203,48 +161,31 @@ function TeamSelector({
               <div className="overflow-y-auto flex-1 p-3" style={{ scrollbarWidth: "thin" }}>
                 <div className="grid grid-cols-6 gap-2">
                   {(grouped[activeConf] ?? []).map((team) => {
-                    const isSelected = selected?.id === team.id;
+                    const isSel = selected?.id === team.id;
                     return (
-                      <motion.button
-                        key={team.id}
-                        onClick={() => handleSelect(team)}
+                      <motion.button key={team.id}
+                        onClick={() => { onSelect(team); setOpen(false); }}
                         whileTap={{ scale: 0.93 }}
                         className="flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all"
                         style={{
-                          background: isSelected ? accentBg : "rgba(255,255,255,0.03)",
-                          border: isSelected
-                            ? `1px solid ${accentBorder}`
-                            : "1px solid rgba(255,255,255,0.05)",
-                          boxShadow: isSelected ? `0 0 12px ${accentBg}` : "none",
-                        }}
-                      >
-                        {/* Flag */}
+                          background: isSel ? sc.bg : "rgba(255,255,255,0.03)",
+                          border: isSel ? `1px solid ${sc.border}` : "1px solid rgba(255,255,255,0.05)",
+                          boxShadow: isSel ? `0 0 12px ${sc.bg}` : "none",
+                        }}>
                         <div className="relative">
-                          <FlagImg
-                            code={team.flag_code}
-                            className="w-9 h-6 rounded-[3px] object-cover"
-                          />
-                          {isSelected && (
-                            <motion.div
-                              initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          <FlagImg code={team.flag_code} className="w-9 h-6 rounded-[3px] object-cover" />
+                          {isSel && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                               className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center"
-                              style={{ background: accentColor }}
-                            >
+                              style={{ background: sc.text }}>
                               <svg viewBox="0 0 10 10" fill="none" className="w-2 h-2">
-                                <path d="M2 5l2 2 4-4" stroke="#000" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M2 5l2 2 4-4" stroke="#fff" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </motion.div>
                           )}
                         </div>
-                        {/* Country name */}
-                        <span
-                          className="text-[8px] font-bold text-center leading-tight line-clamp-2"
-                          style={{
-                            color: isSelected ? accentColor : "#64748b",
-                            wordBreak: "break-word",
-                            hyphens: "auto",
-                          }}
-                        >
+                        <span className="text-[8px] font-bold text-center leading-tight line-clamp-2"
+                          style={{ color: isSel ? sc.text : "#64748b", wordBreak: "break-word" }}>
                           {team.name}
                         </span>
                       </motion.button>
@@ -263,15 +204,9 @@ function TeamSelector({
 // ─── H2H RECORD ───────────────────────────────────────────────
 
 function H2HRecord({
-  record,
-  matches,
-  teamA,
-  teamB,
+  record, matches, teamA, teamB,
 }: {
-  record: DBH2HRecord | null;
-  matches: DBH2HMatch[];
-  teamA: DBTeam;
-  teamB: DBTeam;
+  record: DBH2HRecord | null; matches: DBH2HMatch[]; teamA: DBTeam; teamB: DBTeam;
 }) {
   if (!record) {
     return (
@@ -295,39 +230,38 @@ function H2HRecord({
     <div className="space-y-3">
       <div className="rounded-2xl overflow-hidden"
         style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
-        <div className="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-b border-slate-800">
           <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
             Historial Mundial · {record.played} {record.played === 1 ? "partido" : "partidos"}
           </span>
         </div>
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex flex-col items-center gap-1">
-              <FlagImg code={teamA.flag_code} className="w-8 h-[20px] rounded-[2px]" />
-              <span className="text-3xl font-black text-white tabular-nums">{winsA}</span>
-              <span className={`text-[8px] uppercase ${LABEL_CLASS}`}>victorias</span>
-            </div>
-            <div className="text-center">
+            {[
+              { team: teamA, wins: winsA, side: "A" as const },
+              { team: teamB, wins: winsB, side: "B" as const },
+            ].map(({ team, wins, side }, i) => (
+              <div key={team.id} className="flex flex-col items-center gap-1">
+                <FlagImg code={team.flag_code} className="w-8 h-[20px] rounded-[2px]" />
+                <span className="text-3xl font-black tabular-nums" style={{ color: SIDE_COLORS[side].text }}>{wins}</span>
+                <span className={`text-[8px] uppercase ${LABEL_CLASS}`}>victorias</span>
+              </div>
+            ))}
+            <div className="text-center order-1" style={{ order: 1 }}>
               <div className="text-xl font-black text-slate-600 tabular-nums">{record.draws}</div>
               <div className={`text-[8px] uppercase ${LABEL_CLASS}`}>Empates</div>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <FlagImg code={teamB.flag_code} className="w-8 h-[20px] rounded-[2px]" />
-              <span className="text-3xl font-black text-white tabular-nums">{winsB}</span>
-              <span className={`text-[8px] uppercase ${LABEL_CLASS}`}>victorias</span>
-            </div>
           </div>
-          {/* Barra dominancia */}
           <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden flex gap-0.5">
             <motion.div initial={{ width: 0 }} animate={{ width: `${(winsA / total) * 100}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="h-full bg-amber-400/70 rounded-full" />
+              className="h-full rounded-full" style={{ background: SIDE_COLORS.A.text + "b3" }} />
             <motion.div initial={{ width: 0 }} animate={{ width: `${(record.draws / total) * 100}%` }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
               className="h-full bg-slate-600 rounded-full" />
             <motion.div initial={{ width: 0 }} animate={{ width: `${(winsB / total) * 100}%` }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              className="h-full bg-blue-400/70 rounded-full" />
+              className="h-full rounded-full" style={{ background: SIDE_COLORS.B.text + "b3" }} />
           </div>
           <div className="flex justify-between mt-3 pt-3 border-t border-slate-900">
             <div className="text-center">
@@ -358,11 +292,13 @@ function H2HRecord({
                 <div key={m.id} className="px-4 py-2.5 flex items-center gap-3">
                   <div className="flex items-center gap-2 flex-1">
                     <FlagImg code={teamA.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
-                    <span className={`text-xs font-black tabular-nums ${gA > gB ? "text-amber-400" : "text-slate-400"}`}>{gA}</span>
+                    <span className="text-xs font-black tabular-nums"
+                      style={{ color: gA > gB ? SIDE_COLORS.A.text : "#94a3b8" }}>{gA}</span>
                   </div>
                   <span className="text-[10px] text-slate-700 font-mono">–</span>
                   <div className="flex items-center gap-2 flex-1 justify-end">
-                    <span className={`text-xs font-black tabular-nums ${gB > gA ? "text-amber-400" : "text-slate-400"}`}>{gB}</span>
+                    <span className="text-xs font-black tabular-nums"
+                      style={{ color: gB > gA ? SIDE_COLORS.B.text : "#94a3b8" }}>{gB}</span>
                     <FlagImg code={teamB.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
                   </div>
                   <div className="text-right flex-shrink-0 min-w-[72px]">
@@ -379,7 +315,7 @@ function H2HRecord({
   );
 }
 
-// ─── STAT ROW ─────────────────────────────────────────────────
+// ─── STAT ROW — amarillo para el mejor, sin cambios ───────────
 
 function StatRow({
   label, valueA, valueB, unit = "", higherIsBetter = true,
@@ -416,7 +352,7 @@ function StatRow({
   );
 }
 
-// ─── TYPEWRITER BUBBLE (DT) ───────────────────────────────────
+// ─── COACH BUBBLE ─────────────────────────────────────────────
 
 function CoachBubble({
   coach, comment, delay, isRight,
@@ -425,11 +361,9 @@ function CoachBubble({
 }) {
   const { displayed, done } = useTypewriter(comment, 18, delay);
   const [avatarFailed, setAvatarFailed] = useState(false);
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay / 1000, duration: 0.35, ease: "easeOut" }}
       className={`flex items-start gap-3 ${isRight ? "flex-row-reverse" : "flex-row"}`}
     >
@@ -451,23 +385,18 @@ function CoachBubble({
           <span className="text-[9px] text-slate-500 font-mono truncate">{coach.role}</span>
         </div>
         <motion.div
-          animate={
-            !done
-              ? { boxShadow: ["0 0 6px rgba(245,185,66,0.1)", "0 0 14px rgba(245,185,66,0.25)", "0 0 6px rgba(245,185,66,0.1)"] }
-              : { boxShadow: "0 0 10px rgba(245,185,66,0.15)" }
-          }
+          animate={!done
+            ? { boxShadow: ["0 0 6px rgba(245,185,66,0.1)", "0 0 14px rgba(245,185,66,0.25)", "0 0 6px rgba(245,185,66,0.1)"] }
+            : { boxShadow: "0 0 10px rgba(245,185,66,0.15)" }}
           transition={{ duration: 1.8, repeat: !done ? Infinity : 0 }}
           className="relative rounded-xl border border-amber-500/30 overflow-hidden"
-          style={{ background: "rgba(0,0,0,0.75)" }}
-        >
+          style={{ background: "rgba(0,0,0,0.75)" }}>
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
           <p className="px-4 py-3 text-[12px] text-slate-200 leading-relaxed font-sans">
             "{displayed}
             {!done && (
-              <motion.span
-                animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
-                className="inline-block w-[2px] h-3 bg-amber-400 ml-0.5 align-middle"
-              />
+              <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
+                className="inline-block w-[2px] h-3 bg-amber-400 ml-0.5 align-middle" />
             )}
             {done && '"'}
           </p>
@@ -486,16 +415,13 @@ function CoachChip({
 }) {
   const [failed, setFailed] = useState(false);
   return (
-    <button
-      onClick={onToggle}
-      disabled={isDisabled}
+    <button onClick={onToggle} disabled={isDisabled}
       className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all"
       style={{
         background: isSelected ? "rgba(245,185,66,0.15)" : "rgba(255,255,255,0.04)",
         border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.08)",
         opacity: isDisabled ? 0.4 : 1,
-      }}
-    >
+      }}>
       <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0"
         style={{ border: isSelected ? "1px solid rgba(245,185,66,0.5)" : "1px solid rgba(255,255,255,0.1)" }}>
         {!failed ? (
@@ -508,12 +434,9 @@ function CoachChip({
           </div>
         )}
       </div>
-      <span className={`text-[10px] font-bold ${isSelected ? "text-amber-400" : "text-slate-500"}`}>
-        {coach.name}
-      </span>
+      <span className={`text-[10px] font-bold ${isSelected ? "text-amber-400" : "text-slate-500"}`}>{coach.name}</span>
       {isSelected && (
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}
-          className="text-amber-400 text-[8px]">✓</motion.span>
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-amber-400 text-[8px]">✓</motion.span>
       )}
     </button>
   );
@@ -525,53 +448,43 @@ type TeamStats = {
   played: number; won: number; drawn: number; lost: number;
   goals_for: number; goals_against: number; titles: number;
 };
-
 type SimResult = {
   resultA: number; resultB: number;
   probA: number; probB: number; probDraw: number;
 };
 
-// ─── DT SECTION ──────────────────────────────────────────────
+// ─── DT SECTION — máx 2, debate si hay 2 ─────────────────────
 
 function DTSection({
   coaches, teamA, teamB, simResult, teamAStats, teamBStats, h2hRecord, h2hMatches,
 }: {
   coaches: DBCoachPersonality[];
-  teamA: DBTeam;
-  teamB: DBTeam;
+  teamA: DBTeam; teamB: DBTeam;
   simResult: SimResult | null;
-  teamAStats: TeamStats | null;
-  teamBStats: TeamStats | null;
-  h2hRecord: DBH2HRecord | null;
-  h2hMatches: DBH2HMatch[];
+  teamAStats: TeamStats | null; teamBStats: TeamStats | null;
+  h2hRecord: DBH2HRecord | null; h2hMatches: DBH2HMatch[];
 }) {
   const [selectedCoachIds, setSelectedCoachIds] = useState<string[]>([]);
   const [comments, setComments] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const isDebate = selectedCoachIds.length === 2;
 
-  // Build H2H context string for the prompt
   function buildH2HContext(): string {
     if (!h2hRecord) {
-      return `No hay antecedentes entre ${teamA.name} y ${teamB.name} en Mundiales. Sería su primer enfrentamiento.`;
+      return `No hay antecedentes entre ${teamA.name} y ${teamB.name} en Mundiales. Sería su primer enfrentamiento histórico.`;
     }
     const aIsA = teamA.id < teamB.id;
     const winsA = aIsA ? h2hRecord.team_a_wins : h2hRecord.team_b_wins;
     const winsB = aIsA ? h2hRecord.team_b_wins : h2hRecord.team_a_wins;
     const goalsA = aIsA ? h2hRecord.team_a_goals : h2hRecord.team_b_goals;
     const goalsB = aIsA ? h2hRecord.team_b_goals : h2hRecord.team_a_goals;
-
-    let ctx = `HISTORIAL EN MUNDIALES entre ${teamA.name} vs ${teamB.name}: `;
-    ctx += `${h2hRecord.played} partido(s). `;
-    ctx += `${teamA.name} ganó ${winsA}, ${teamB.name} ganó ${winsB}, ${h2hRecord.draws} empate(s). `;
-    ctx += `Goles: ${teamA.name} ${goalsA} - ${teamB.name} ${goalsB}. `;
-
+    let ctx = `${h2hRecord.played} partido(s) en Mundiales. ${teamA.name} ganó ${winsA}, ${teamB.name} ganó ${winsB}, ${h2hRecord.draws} empate(s). Goles: ${teamA.name} ${goalsA} - ${teamB.name} ${goalsB}.`;
     if (h2hMatches.length > 0) {
-      ctx += "Partidos: ";
-      ctx += h2hMatches.slice(0, 4).map((m) => {
-        const aIsA2 = m.team_a_id === teamA.id;
-        const gA = aIsA2 ? m.team_a_goals : m.team_b_goals;
-        const gB = aIsA2 ? m.team_b_goals : m.team_a_goals;
+      ctx += " Partidos: " + h2hMatches.slice(0, 4).map((m) => {
+        const a2 = m.team_a_id === teamA.id;
+        const gA = a2 ? m.team_a_goals : m.team_b_goals;
+        const gB = a2 ? m.team_b_goals : m.team_a_goals;
         return `${m.year} (${m.stage || "Mundial"}) ${teamA.name} ${gA}-${gB} ${teamB.name}`;
       }).join("; ") + ".";
     }
@@ -580,7 +493,7 @@ function DTSection({
 
   function toggleCoach(id: string) {
     setSelectedCoachIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 3 ? [...prev, id] : prev
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 2 ? [...prev, id] : prev
     );
     setRevealed(false);
     setComments({});
@@ -588,45 +501,44 @@ function DTSection({
 
   async function loadComments() {
     if (selectedCoachIds.length === 0) return;
-    setLoading(true);
-    setRevealed(true);
-    setComments({});
+    setLoading(true); setRevealed(true); setComments({});
 
     const h2hContext = buildH2HContext();
-    const selected = coaches.filter((c) => selectedCoachIds.includes(c.id));
+    const base = {
+      teamAName: teamA.name, teamBName: teamB.name,
+      teamAStats, teamBStats, h2hContext,
+      resultA: simResult?.resultA ?? null, resultB: simResult?.resultB ?? null,
+      probA: simResult?.probA ?? null, probB: simResult?.probB ?? null, probDraw: simResult?.probDraw ?? null,
+    };
 
-    const results = await Promise.all(
-      selected.map(async (coach) => {
-        try {
-          const res = await fetch("/api/coach-comment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              coachSystemPrompt: coach.system_prompt,
-              teamAName: teamA.name,
-              teamBName: teamB.name,
-              teamAStats,
-              teamBStats,
-              h2hContext,
-              resultA: simResult?.resultA ?? null,
-              resultB: simResult?.resultB ?? null,
-              probA: simResult?.probA ?? null,
-              probB: simResult?.probB ?? null,
-              probDraw: simResult?.probDraw ?? null,
-              mode: simResult ? "simulation" : "h2h_analysis",
-            }),
-          });
-          const data = await res.json();
-          return { id: coach.id, comment: data.comment || "Sin señal del DT." };
-        } catch {
-          return { id: coach.id, comment: "Sin señal del DT." };
-        }
-      })
-    );
-
-    const map: Record<string, string> = {};
-    results.forEach((r) => { map[r.id] = r.comment; });
-    setComments(map);
+    try {
+      if (isDebate) {
+        const [c1, c2] = selectedCoachIds.map((id) => coaches.find((c) => c.id === id)!);
+        const res = await fetch("/api/coach-comment", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...base, mode: "debate",
+            coachSystemPrompt: c1.system_prompt, coachSystemPrompt2: c2.system_prompt,
+            coachName: c1.name, coachName2: c2.name,
+          }),
+        });
+        const data = await res.json();
+        setComments({ [c1.id]: data.comment || "Sin señal.", [c2.id]: data.comment2 || "..." });
+      } else {
+        const coach = coaches.find((c) => c.id === selectedCoachIds[0])!;
+        const res = await fetch("/api/coach-comment", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...base, mode: simResult ? "simulation" : "h2h_analysis",
+            coachSystemPrompt: coach.system_prompt, coachName: coach.name,
+          }),
+        });
+        const data = await res.json();
+        setComments({ [coach.id]: data.comment || "Sin señal del DT." });
+      }
+    } catch {
+      selectedCoachIds.forEach((id) => setComments((p) => ({ ...p, [id]: "Sin señal del DT." })));
+    }
     setLoading(false);
   }
 
@@ -637,55 +549,64 @@ function DTSection({
       style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
 
       <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-2">
-        <motion.div
-          animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }}
+        <motion.div animate={{ opacity: [1, 0.3, 1], scale: [1, 1.15, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
           className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"
-          style={{ boxShadow: "0 0 6px #34d39980" }}
-        />
+          style={{ boxShadow: "0 0 6px #34d39980" }} />
         <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>
-          Análisis de DTs · Elegí hasta 3
+          {isDebate ? "Modo Debate" : "Análisis de DT · Elegí hasta 2"}
         </span>
+        {isDebate && (
+          <motion.span initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+            className="ml-auto text-[9px] font-mono px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(245,185,66,0.12)", color: "#f5b942", border: "1px solid rgba(245,185,66,0.3)" }}>
+            ⚡ Debate
+          </motion.span>
+        )}
       </div>
 
       <div className="p-3">
         <div className="flex flex-wrap gap-2">
           {coaches.map((coach) => (
-            <CoachChip
-              key={coach.id}
-              coach={coach}
+            <CoachChip key={coach.id} coach={coach}
               isSelected={selectedCoachIds.includes(coach.id)}
-              isDisabled={!selectedCoachIds.includes(coach.id) && selectedCoachIds.length >= 3}
+              isDisabled={!selectedCoachIds.includes(coach.id) && selectedCoachIds.length >= 2}
               onToggle={() => {
-                const isSelected = selectedCoachIds.includes(coach.id);
-                const isDisabled = !isSelected && selectedCoachIds.length >= 3;
-                if (!isDisabled) toggleCoach(coach.id);
-              }}
-            />
+                if (!selectedCoachIds.includes(coach.id) && selectedCoachIds.length >= 2) return;
+                toggleCoach(coach.id);
+              }} />
           ))}
         </div>
 
+        <AnimatePresence>
+          {isDebate && (
+            <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="mt-2 px-3 py-2 rounded-xl text-[10px] font-mono"
+              style={{ background: "rgba(245,185,66,0.06)", border: "1px solid rgba(245,185,66,0.15)", color: "#a16207" }}>
+              Los DTs van a debatir entre sí sobre este partido
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {selectedCoachIds.length > 0 && (
-          <motion.button
-            initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={loadComments}
-            disabled={loading}
+          <motion.button initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.97 }} onClick={loadComments} disabled={loading}
             className="mt-3 w-full py-2.5 rounded-xl font-bold text-xs tracking-widest uppercase transition-all"
             style={{
               background: loading ? "rgba(245,185,66,0.06)" : "rgba(245,185,66,0.12)",
               border: "1px solid rgba(245,185,66,0.35)",
               color: loading ? "#6b5a2e" : "#f5b942",
-            }}
-          >
+            }}>
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   className="inline-block w-3 h-3 rounded-full border-2 border-amber-400/20 border-t-amber-400/60" />
-                Pensando…
+                {isDebate ? "Generando debate…" : "Pensando…"}
               </span>
             ) : (
-              `Escuchar a ${selectedCoachIds.length === 1 ? "este DT" : `estos ${selectedCoachIds.length} DTs`}`
+              isDebate
+                ? `Que debatan: ${selectedCoaches.map((c) => c.name).join(" vs ")}`
+                : `Escuchar a ${selectedCoaches[0]?.name}`
             )}
           </motion.button>
         )}
@@ -693,14 +614,12 @@ function DTSection({
 
       <AnimatePresence>
         {revealed && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
-            className="overflow-hidden border-t border-slate-900"
-          >
+            className="overflow-hidden border-t border-slate-900">
             <div className="px-4 py-4 space-y-5">
               {loading ? (
-                [0, 1, 2].slice(0, selectedCoachIds.length).map((i) => (
+                [0, 1].slice(0, selectedCoachIds.length).map((i) => (
                   <div key={i} className="flex items-start gap-3">
                     <motion.div animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
                       className="w-10 h-10 rounded-full bg-slate-800 flex-shrink-0" />
@@ -713,17 +632,13 @@ function DTSection({
                   </div>
                 ))
               ) : (
-                selectedCoaches
-                  .filter((c) => comments[c.id])
-                  .map((coach, i) => (
-                    <CoachBubble
-                      key={`${coach.id}-${Object.keys(comments).join("-")}`}
-                      coach={coach}
-                      comment={comments[coach.id]}
-                      delay={i * 800}
-                      isRight={i % 2 !== 0}
-                    />
-                  ))
+                selectedCoaches.filter((c) => comments[c.id]).map((coach, i) => (
+                  <CoachBubble
+                    key={`${coach.id}-${Object.keys(comments).join("-")}`}
+                    coach={coach} comment={comments[coach.id]}
+                    delay={i * 800} isRight={isDebate ? i % 2 !== 0 : false}
+                  />
+                ))
               )}
             </div>
           </motion.div>
@@ -735,54 +650,40 @@ function DTSection({
 
 // ─── SIMULATION PANEL ─────────────────────────────────────────
 
-function SimulationPanel({
-  teamA, teamB, onResult,
-}: {
+function SimulationPanel({ teamA, teamB, onResult }: {
   teamA: DBTeam; teamB: DBTeam; onResult: (r: SimResult | null) => void;
 }) {
   const [simResult, setSimResult] = useState<SimResult | null>(null);
   const [simulating, setSimulating] = useState(false);
 
   async function handleSimulate() {
-    setSimulating(true);
-    setSimResult(null);
-    onResult(null);
+    setSimulating(true); setSimResult(null); onResult(null);
     try {
       const res = await fetch("/api/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamA: teamA.id, teamB: teamB.id }),
       });
       const data = await res.json();
-      const r: SimResult = {
-        resultA: data.resultA, resultB: data.resultB,
-        probA: data.probA, probB: data.probB, probDraw: data.probDraw,
-      };
-      setSimResult(r);
-      onResult(r);
+      const r: SimResult = { resultA: data.resultA, resultB: data.resultB, probA: data.probA, probB: data.probB, probDraw: data.probDraw };
+      setSimResult(r); onResult(r);
     } catch { /* silencioso */ }
     finally { setSimulating(false); }
   }
 
   const winner = simResult
     ? simResult.resultA > simResult.resultB ? teamA
-    : simResult.resultB > simResult.resultA ? teamB
-    : null
+    : simResult.resultB > simResult.resultA ? teamB : null
     : null;
 
   return (
     <div className="space-y-3">
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        onClick={handleSimulate}
-        disabled={simulating}
+      <motion.button whileTap={{ scale: 0.97 }} onClick={handleSimulate} disabled={simulating}
         className="w-full py-4 rounded-2xl font-black text-sm tracking-widest uppercase relative overflow-hidden"
         style={{
           background: simulating ? "rgba(245,185,66,0.07)" : "rgba(245,185,66,0.13)",
           border: "1px solid rgba(245,185,66,0.4)",
           color: simulating ? "#6b5a2e" : "#f5b942",
-        }}
-      >
+        }}>
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "radial-gradient(ellipse 80% 120% at 50% 0%, rgba(245,185,66,0.07) 0%, transparent 70%)" }} />
         <div className="relative flex items-center justify-center gap-2.5">
@@ -805,37 +706,42 @@ function SimulationPanel({
 
       <AnimatePresence>
         {simResult && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
             className="rounded-2xl overflow-hidden"
-            style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(245,185,66,0.2)" }}
-          >
+            style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(245,185,66,0.2)" }}>
             <div className="px-4 py-2.5 border-b border-slate-800 flex items-center gap-2">
               <motion.div animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }}
-                className="w-2 h-2 rounded-full bg-emerald-400"
-                style={{ boxShadow: "0 0 6px #34d39980" }} />
+                className="w-2 h-2 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d39980" }} />
               <span className={`text-[9px] uppercase tracking-widest ${LABEL_CLASS}`}>Resultado simulado · IA</span>
             </div>
             <div className="px-4 py-5">
               <div className="flex items-center justify-center gap-6 mb-4">
-                <div className="flex flex-col items-center gap-1.5">
-                  <FlagImg code={teamA.flag_code} className="w-10 h-[26px] rounded-[3px]" />
-                  <span className="text-[9px] font-bold text-white text-center leading-tight max-w-[60px]">{teamA.name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-5xl font-black tabular-nums ${simResult.resultA > simResult.resultB ? "text-amber-400" : "text-white"}`}>
-                    {simResult.resultA}
-                  </span>
-                  <span className="text-2xl text-slate-700 font-black">–</span>
-                  <span className={`text-5xl font-black tabular-nums ${simResult.resultB > simResult.resultA ? "text-amber-400" : "text-white"}`}>
-                    {simResult.resultB}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <FlagImg code={teamB.flag_code} className="w-10 h-[26px] rounded-[3px]" />
-                  <span className="text-[9px] font-bold text-white text-center leading-tight max-w-[60px]">{teamB.name}</span>
-                </div>
+                {[
+                  { team: teamA, score: simResult.resultA, other: simResult.resultB, side: "A" as const },
+                  { team: teamB, score: simResult.resultB, other: simResult.resultA, side: "B" as const },
+                ].map(({ team, score, other, side }, i) => (
+                  <div key={team.id} className="flex flex-col items-center gap-1.5">
+                    <FlagImg code={team.flag_code} className="w-10 h-[26px] rounded-[3px]" />
+                    <span className="text-[9px] font-bold text-center leading-tight max-w-[60px]"
+                      style={{ color: SIDE_COLORS[side].text }}>{team.name}</span>
+                    {i === 0 && (
+                      <div className="flex items-center gap-3" style={{ position: "absolute" }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              {/* Marcador centrado */}
+              <div className="flex items-center justify-center gap-4 -mt-2 mb-4">
+                <span className="text-5xl font-black tabular-nums"
+                  style={{ color: simResult.resultA > simResult.resultB ? "#f5b942" : "white" }}>
+                  {simResult.resultA}
+                </span>
+                <span className="text-2xl text-slate-700 font-black">–</span>
+                <span className="text-5xl font-black tabular-nums"
+                  style={{ color: simResult.resultB > simResult.resultA ? "#f5b942" : "white" }}>
+                  {simResult.resultB}
+                </span>
               </div>
               {winner && (
                 <div className="text-center mb-4">
@@ -846,12 +752,12 @@ function SimulationPanel({
               )}
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: teamA.name, prob: simResult.probA, color: "text-amber-400" },
-                  { label: "Empate", prob: simResult.probDraw, color: "text-slate-400" },
-                  { label: teamB.name, prob: simResult.probB, color: "text-blue-400" },
+                  { label: teamA.name, prob: simResult.probA, color: SIDE_COLORS.A.text },
+                  { label: "Empate", prob: simResult.probDraw, color: "#94a3b8" },
+                  { label: teamB.name, prob: simResult.probB, color: SIDE_COLORS.B.text },
                 ].map((item) => (
                   <div key={item.label} className="text-center">
-                    <div className={`text-lg font-black tabular-nums ${item.color}`}>{item.prob}%</div>
+                    <div className="text-lg font-black tabular-nums" style={{ color: item.color }}>{item.prob}%</div>
                     <div className={`text-[8px] uppercase truncate ${LABEL_CLASS}`}>{item.label}</div>
                   </div>
                 ))}
@@ -868,11 +774,9 @@ function SimulationPanel({
 
 function Modo2Placeholder() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-8 text-center space-y-3"
-      style={{ background: "rgba(13,17,23,0.97)", border: "1px dashed rgba(245,185,66,0.2)" }}
-    >
+      style={{ background: "rgba(13,17,23,0.97)", border: "1px dashed rgba(245,185,66,0.2)" }}>
       <div className="text-3xl">🏆</div>
       <div className="text-sm font-black text-white tracking-wide">Selecciones Históricas</div>
       <p className="text-xs text-slate-500 font-mono leading-relaxed">
@@ -887,7 +791,7 @@ function Modo2Placeholder() {
   );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────
+// ─── MAIN ─────────────────────────────────────────────────────
 
 export default function HeadToHead() {
   const isMobile = useIsMobile();
@@ -896,10 +800,8 @@ export default function HeadToHead() {
   const [teams, setTeams] = useState<DBTeam[]>([]);
   const [coaches, setCoaches] = useState<DBCoachPersonality[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [teamA, setTeamA] = useState<DBTeam | null>(null);
   const [teamB, setTeamB] = useState<DBTeam | null>(null);
-
   const [h2hRecord, setH2HRecord] = useState<DBH2HRecord | null>(null);
   const [h2hMatches, setH2HMatches] = useState<DBH2HMatch[]>([]);
   const [loadingH2H, setLoadingH2H] = useState(false);
@@ -914,18 +816,14 @@ export default function HeadToHead() {
         ]);
         if (teamsRes.data) setTeams(teamsRes.data);
         if (coachesRes.data) setCoaches(coachesRes.data);
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     }
     loadData();
   }, []);
 
   useEffect(() => {
     if (!teamA || !teamB) return;
-    setH2HRecord(null);
-    setH2HMatches([]);
-    setSimResult(null);
+    setH2HRecord(null); setH2HMatches([]); setSimResult(null);
 
     async function loadH2H() {
       setLoadingH2H(true);
@@ -939,9 +837,7 @@ export default function HeadToHead() {
         ]);
         setH2HRecord(recordRes.data ?? null);
         setH2HMatches(matchesRes.data ?? []);
-      } finally {
-        setLoadingH2H(false);
-      }
+      } finally { setLoadingH2H(false); }
     }
     loadH2H();
   }, [teamA, teamB]);
@@ -961,34 +857,25 @@ export default function HeadToHead() {
   return (
     <div className="space-y-4 pb-8">
 
-      {/* Header */}
       <div className="pt-1">
         <div className={`text-[9px] uppercase tracking-widest mb-1 ${LABEL_CLASS}`}>Modo Duelo</div>
         <h2 className="text-xl font-black text-white tracking-wide">Head to Head</h2>
-        <p className={`text-[11px] mt-0.5 ${LABEL_CLASS}`}>
-          Historial en Mundiales · Simulación · Análisis de DTs
-        </p>
+        <p className={`text-[11px] mt-0.5 ${LABEL_CLASS}`}>Historial en Mundiales · Simulación · Análisis de DTs</p>
       </div>
 
-      {/* Toggle Modo */}
       <div className="flex gap-1.5 p-1 rounded-xl"
         style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
         {[
           { key: "actual",    label: "Selecciones Actuales", sub: "WC 2026 · 48 equipos" },
           { key: "historico", label: "Históricas",           sub: "Campeones · Leyendas" },
         ].map((m) => (
-          <button
-            key={m.key}
-            onClick={() => setMode(m.key as typeof mode)}
+          <button key={m.key} onClick={() => setMode(m.key as typeof mode)}
             className="flex-1 text-left px-3 py-2.5 rounded-lg transition-all"
             style={{
               background: mode === m.key ? "rgba(245,185,66,0.1)" : "transparent",
               border: mode === m.key ? "1px solid rgba(245,185,66,0.3)" : "1px solid transparent",
-            }}
-          >
-            <div className={`text-[11px] font-bold ${mode === m.key ? "text-amber-400" : "text-slate-500"}`}>
-              {m.label}
-            </div>
+            }}>
+            <div className={`text-[11px] font-bold ${mode === m.key ? "text-amber-400" : "text-slate-500"}`}>{m.label}</div>
             <div className="text-[9px] font-mono text-slate-700 mt-0.5">{m.sub}</div>
           </button>
         ))}
@@ -996,69 +883,58 @@ export default function HeadToHead() {
 
       <AnimatePresence mode="wait">
 
-        {/* MODO 2 */}
         {mode === "historico" && (
           <motion.div key="modo2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <Modo2Placeholder />
           </motion.div>
         )}
 
-        {/* MODO 1 */}
         {mode === "actual" && (
           <motion.div key="modo1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="space-y-4">
 
-            {/* Selector de equipos */}
+            {/* Selectors */}
             <div className="rounded-2xl p-4"
               style={{ background: "rgba(13,17,23,0.97)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <div className="flex gap-3">
-                <TeamSelector
-                  teams={teams} selected={teamA}
-                  onSelect={(t) => { setTeamA(t); }}
-                  label="Selección A" exclude={teamB?.id} side="A"
-                />
+                <TeamSelector teams={teams} selected={teamA} onSelect={setTeamA}
+                  label="Selección A" exclude={teamB?.id} side="A" />
                 <div className="flex items-end pb-1">
                   <span className="text-slate-700 font-black text-lg">vs</span>
                 </div>
-                <TeamSelector
-                  teams={teams} selected={teamB}
-                  onSelect={(t) => { setTeamB(t); }}
-                  label="Selección B" exclude={teamA?.id} side="B"
-                />
+                <TeamSelector teams={teams} selected={teamB} onSelect={setTeamB}
+                  label="Selección B" exclude={teamA?.id} side="B" />
               </div>
 
-              {/* Stats rápidas */}
               <AnimatePresence>
                 {bothSelected && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                    className="overflow-hidden mt-3 pt-3 border-t border-slate-900"
-                  >
+                    className="overflow-hidden mt-3 pt-3 border-t border-slate-900">
                     <div className="grid grid-cols-2 gap-3">
-                      {[teamA, teamB].map((team, idx) => (
-                        <div key={team!.id} className="space-y-1">
+                      {([teamA, teamB] as [DBTeam, DBTeam]).map((team, idx) => (
+                        <div key={team.id} className="space-y-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <FlagImg code={team!.flag_code} className="w-5 h-[13px] rounded-[2px]" />
+                            <FlagImg code={team.flag_code} className="w-5 h-[13px] rounded-[2px]" />
                             <span className="text-[10px] font-bold truncate"
-                              style={{ color: idx === 0 ? "#f5b942" : "#60a5fa" }}>
-                              {team!.name}
+                              style={{ color: idx === 0 ? SIDE_COLORS.A.text : SIDE_COLORS.B.text }}>
+                              {team.name}
                             </span>
                           </div>
                           {[
-                            { label: "Part.", value: team!.participations },
-                            { label: "PJ",    value: team!.played },
-                            { label: "V",     value: team!.won },
-                            { label: "Títulos", value: team!.titles },
+                            { label: "Part.",   value: team.participations },
+                            { label: "PJ",      value: team.played },
+                            { label: "V",       value: team.won },
+                            { label: "Títulos", value: team.titles },
                           ].map((s) => (
                             <div key={s.label} className="flex justify-between items-center">
                               <span className={`text-[9px] ${LABEL_CLASS}`}>{s.label}</span>
                               <span className="text-[10px] font-bold text-white tabular-nums">{s.value}</span>
                             </div>
                           ))}
-                          {team!.best_position && (
+                          {team.best_position && (
                             <div className="text-[8px] font-mono text-amber-400/60 leading-tight mt-1">
-                              {team!.best_position}
+                              {team.best_position}
                             </div>
                           )}
                         </div>
@@ -1100,14 +976,15 @@ export default function HeadToHead() {
                           Comparación histórica en Mundiales
                         </span>
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1.5">
-                            <FlagImg code={teamA!.flag_code} className="w-4 h-[10px] rounded-[1px]" />
-                            <span className="text-[9px] text-amber-400/70 font-mono">{teamA!.confederation}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <FlagImg code={teamB!.flag_code} className="w-4 h-[10px] rounded-[1px]" />
-                            <span className="text-[9px] text-blue-400/70 font-mono">{teamB!.confederation}</span>
-                          </div>
+                          {([teamA, teamB] as [DBTeam, DBTeam]).map((t, i) => (
+                            <div key={t.id} className="flex items-center gap-1.5">
+                              <FlagImg code={t.flag_code} className="w-4 h-[10px] rounded-[1px]" />
+                              <span className="text-[9px] font-mono"
+                                style={{ color: i === 0 ? SIDE_COLORS.A.text + "b3" : SIDE_COLORS.B.text + "b3" }}>
+                                {t.confederation}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -1143,12 +1020,8 @@ export default function HeadToHead() {
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
                   <DTSection
-                    coaches={coaches}
-                    teamA={teamA!}
-                    teamB={teamB!}
-                    simResult={simResult}
-                    h2hRecord={h2hRecord}
-                    h2hMatches={h2hMatches}
+                    coaches={coaches} teamA={teamA!} teamB={teamB!}
+                    simResult={simResult} h2hRecord={h2hRecord} h2hMatches={h2hMatches}
                     teamAStats={{
                       played: teamA!.played, won: teamA!.won, drawn: teamA!.drawn, lost: teamA!.lost,
                       goals_for: teamA!.goals_for, goals_against: teamA!.goals_against, titles: teamA!.titles,
