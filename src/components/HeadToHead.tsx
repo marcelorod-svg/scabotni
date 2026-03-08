@@ -25,7 +25,7 @@ const TEAM_COLOR_BY_ID: Record<string, string> = {
   venezuela: "#F59E0B",
   bolivia: "#16A34A",
 
-  germany: "#111827",
+  germany: "#DC2626",
   france: "#1D4ED8",
   spain: "#DC2626",
   england: "#EF4444",
@@ -274,7 +274,7 @@ function TeamSelector({
               style={{
                 background: "rgba(8,12,18,0.99)",
                 border: `1px solid ${sc.border}`,
-                boxShadow: `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
+                boxShadow: isMobile ? "none" : `0 0 40px rgba(0,0,0,0.8), 0 0 20px ${sc.bg}`,
               }}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 flex-shrink-0">
@@ -437,7 +437,7 @@ function H2HRecord({ summary, teamA, teamB }: { summary: H2HSummary | null; team
               <div className="text-base font-black text-white tabular-nums">{goals_a}</div>
               <div className={`text-[8px] uppercase ${LABEL_CLASS}`}>Goles</div>
             </div>
-            <div className={`text-[9px] self-center uppercase ${LABEL_CLASS}`}>vs</div>
+            <div className={`text-[11px] self-center ${LABEL_CLASS}`}>⚽</div>
             <div className="text-center">
               <div className="text-base font-black text-white tabular-nums">{goals_b}</div>
               <div className={`text-[8px] uppercase ${LABEL_CLASS}`}>Goles</div>
@@ -455,7 +455,7 @@ function H2HRecord({ summary, teamA, teamB }: { summary: H2HSummary | null; team
             {eliminations_a.map((e, i) => (
               <div key={`a-${i}`} className="flex items-center gap-2">
                 <FlagImg code={teamA.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
-                <span className="text-[10px] font-bold" style={{ color: colorA }}>
+                <span className="text-[10px] font-bold" text-white">
                   {teamA.name} eliminó a {teamB.name}
                 </span>
                 <span className="ml-auto text-[9px] font-mono text-slate-500">
@@ -467,7 +467,7 @@ function H2HRecord({ summary, teamA, teamB }: { summary: H2HSummary | null; team
             {eliminations_b.map((e, i) => (
               <div key={`b-${i}`} className="flex items-center gap-2">
                 <FlagImg code={teamB.flag_code} className="w-5 h-[13px] rounded-[2px] flex-shrink-0" />
-                <span className="text-[10px] font-bold" style={{ color: colorB }}>
+                <span className="text-[10px] font-bold" text-white">
                   {teamB.name} eliminó a {teamA.name}
                 </span>
                 <span className="ml-auto text-[9px] font-mono text-slate-500">
