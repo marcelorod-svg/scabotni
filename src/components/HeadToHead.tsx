@@ -973,7 +973,8 @@ export default function HeadToHead() {
                   }}
                   label="Selección A"
                   exclude={teamB?.id}
-                  side="A" isMobile={isMobile} />
+                  side="A" 
+                  isMobile={isMobile}
                 />
                 <div className="flex items-end pb-1">
                   <span className="text-slate-700 font-black text-lg">vs</span>
@@ -987,7 +988,8 @@ export default function HeadToHead() {
                   }}
                   label="Selección B"
                   exclude={teamA?.id}
-                  side="B" isMobile={isMobile} />
+                  side="B" 
+                  isMobile={isMobile}
                 />
               </div>
               <AnimatePresence>
