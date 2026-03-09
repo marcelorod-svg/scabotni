@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
 
 // ── Reemplazar con tu cliente real ───────────────────────────────────────────
 const supabase = createClient(
