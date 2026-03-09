@@ -14,6 +14,7 @@ import BottomNav, { type TabId } from "@/components/BottomNav";
 import CentralDeDatos from "@/components/CentralDeDatos";
 import Vestuario from "@/components/Vestuario";
 import HeadToHead from "@/components/HeadToHead";
+import DueloDeEras from "@/components/DueloDeEras";
 import { mockMatches } from "@/lib/mockData";
 import { getManagerPrediction } from "@/lib/managers";
 import type { Match, Manager, UserPrediction } from "@/lib/types";
@@ -340,7 +341,18 @@ export default function Home() {
               <HeadToHead />
             </motion.div>
           )}
-
+         {activeTab === "duelo" && (
+            <motion.div
+              key="duelo"
+              variants={tabVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={tabTransition}
+            >
+              <DueloDeEras />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -357,3 +369,4 @@ export default function Home() {
     </div>
   );
 }
+
