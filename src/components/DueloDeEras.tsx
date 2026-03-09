@@ -35,7 +35,7 @@ interface HistoricSlot {
   countryCode: string
 }
 
-// ─── Banderas via flagcdn (funciona en todos los browsers) ───────────────────
+// ─── Banderas via flagcdn ─────────────────────────────────────────────────────
 
 const COUNTRY_CODES: Record<string, string> = {
   "Argentina":      "ar",
@@ -61,8 +61,7 @@ function FlagImg({ country, size = 20 }: { country: string; size?: number }) {
   if (!code) return <span style={{ fontSize: size * 0.9 }}>🏴</span>
   return (
     <img
-      src={`https://flagcdn.com/${size * 2}x${Math.round(size * 1.5)
-        }/${code}.png`}
+      src={`https://flagcdn.com/${size * 2}x${Math.round(size * 1.5)}/${code}.png`}
       width={size}
       height={Math.round(size * 0.75)}
       alt={country}
@@ -73,7 +72,7 @@ function FlagImg({ country, size = 20 }: { country: string; size?: number }) {
   )
 }
 
-// ─── Goleadores POR SELECCION (no del torneo) ─────────────────────────────────
+// ─── Goleadores por selección ─────────────────────────────────────────────────
 
 const TOP_SCORERS: Record<string, { champion: string; runner_up: string }> = {
   "2022": { champion: "Julián Álvarez · 4⚽",         runner_up: "Kylian Mbappé · 8⚽" },
@@ -128,6 +127,459 @@ const EXTRAS: Record<number, {
   1938: { champion: { captain: "Giuseppe Meazza",    keyPlayer: "Silvio Piola" },        runner_up: { captain: "György Sárosi",        keyPlayer: "György Sárosi" } },
   1934: { champion: { captain: "Gianpiero Combi",    keyPlayer: "Giuseppe Meazza" },     runner_up: { captain: "František Plánička",   keyPlayer: "Oldřich Nejedlý" } },
   1930: { champion: { captain: "José Nasazzi",       keyPlayer: "Héctor Castro" },       runner_up: { captain: "Manuel Ferreira",      keyPlayer: "G. Stábile" } },
+}
+
+// ─── STATIC_FALLBACK ──────────────────────────────────────────────────────────
+// Datos derivados de CSV oficial (matches_1930_2022) + curación histórica.
+// Cubre las 22 ediciones × 2 roles = 44 entradas.
+// getTeamData() prioriza DB; si no hay fila, usa este fallback.
+
+const STATIC_FALLBACK: Record<string, Omit<DBHistoricTeam, "id">> = {
+  "2022-champion": {
+    team_id: "Argentina", year: 2022, role: "champion",
+    coach: "Lionel Scaloni", formation: "4-4-2 / 4-3-3",
+    tournament_notes: "Maradona no, pero Messi sí. Argentina aguantó dos veces el 2-2 de Francia en el Lusail. La copa llegó tras 36 años de espera.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 8,
+    goals_per_match: 2.14, xg_per_match: 2.16,
+    avg_possession: 53.0, shots_per_match: 13.0,
+    pass_accuracy: 84.0, pressing_intensity: 68.0, defensive_actions: 52,
+  },
+  "2022-runner_up": {
+    team_id: "France", year: 2022, role: "runner_up",
+    coach: "Didier Deschamps", formation: "4-2-3-1",
+    tournament_notes: "Mbappé marcó un hat-trick en la final. Francia fue al alargue pero perdió en penales. Generación dorada que quedó a un paso.",
+    matches_played: 7, goals_scored: 16, goals_conceded: 8,
+    goals_per_match: 2.29, xg_per_match: 1.96,
+    avg_possession: 55.0, shots_per_match: 14.0,
+    pass_accuracy: 86.0, pressing_intensity: 72.0, defensive_actions: 48,
+  },
+  "2018-champion": {
+    team_id: "France", year: 2018, role: "champion",
+    coach: "Didier Deschamps", formation: "4-2-3-1",
+    tournament_notes: "Deschamps construyó un equipo sólido y letal en el contraataque. Mbappé, 19 años, iluminó el mundial. 4-2 a Croacia en la final.",
+    matches_played: 7, goals_scored: 14, goals_conceded: 6,
+    goals_per_match: 2.0, xg_per_match: 1.31,
+    avg_possession: 60.0, shots_per_match: 13.0,
+    pass_accuracy: 87.0, pressing_intensity: 75.0, defensive_actions: 45,
+  },
+  "2018-runner_up": {
+    team_id: "Croatia", year: 2018, role: "runner_up",
+    coach: "Zlatko Dalić", formation: "4-1-4-1",
+    tournament_notes: "Modrić y Rakitić en modo bestial. Croacia ganó tres veces en el alargue. Llegaron a la final por primera vez en su historia.",
+    matches_played: 7, goals_scored: 14, goals_conceded: 9,
+    goals_per_match: 2.0, xg_per_match: 1.59,
+    avg_possession: 47.0, shots_per_match: 12.0,
+    pass_accuracy: 79.0, pressing_intensity: 65.0, defensive_actions: 58,
+  },
+  "2014-champion": {
+    team_id: "Germany", year: 2014, role: "champion",
+    coach: "Joachim Löw", formation: "4-2-3-1",
+    tournament_notes: "La Mannschaft de Löw: dominante, colectiva y letal. Goleó 7-1 a Brasil en la semi. Götze y el gol en el 113'. La generación del oro.",
+    matches_played: 7, goals_scored: 18, goals_conceded: 4,
+    goals_per_match: 2.57, xg_per_match: null,
+    avg_possession: 58.0, shots_per_match: 16.0,
+    pass_accuracy: 85.0, pressing_intensity: 78.0, defensive_actions: 42,
+  },
+  "2014-runner_up": {
+    team_id: "Argentina", year: 2014, role: "runner_up",
+    coach: "Alejandro Sabella", formation: "5-3-2 / 4-3-3",
+    tournament_notes: "Sabella organizó un equipo defensivo con Messi como arma. Llegaron a la final sin convencer pero sin perder. Faltó el gol de Higuaín.",
+    matches_played: 7, goals_scored: 8, goals_conceded: 4,
+    goals_per_match: 1.14, xg_per_match: null,
+    avg_possession: 42.0, shots_per_match: 10.0,
+    pass_accuracy: 80.0, pressing_intensity: 60.0, defensive_actions: 55,
+  },
+  "2010-champion": {
+    team_id: "Spain", year: 2010, role: "champion",
+    coach: "Vicente del Bosque", formation: "4-2-3-1",
+    tournament_notes: "La España del tiqui-taca en su pico. Iniesta, Xavi y Villa. Un solo gol en la final. El primer Mundial para La Roja.",
+    matches_played: 7, goals_scored: 8, goals_conceded: 2,
+    goals_per_match: 1.14, xg_per_match: null,
+    avg_possession: 61.0, shots_per_match: 14.0,
+    pass_accuracy: 88.0, pressing_intensity: 80.0, defensive_actions: 40,
+  },
+  "2010-runner_up": {
+    team_id: "Netherlands", year: 2010, role: "runner_up",
+    coach: "Bert van Marwijk", formation: "4-2-3-1",
+    tournament_notes: "Sneijder y Robben llevaron a Holanda a su tercera final. Llegaron con juego físico y letal, pero perdieron en el alargue.",
+    matches_played: 7, goals_scored: 12, goals_conceded: 6,
+    goals_per_match: 1.71, xg_per_match: null,
+    avg_possession: 49.0, shots_per_match: 13.0,
+    pass_accuracy: 82.0, pressing_intensity: 63.0, defensive_actions: 52,
+  },
+  "2006-champion": {
+    team_id: "Italy", year: 2006, role: "champion",
+    coach: "Marcello Lippi", formation: "4-4-2 / 4-3-1-2",
+    tournament_notes: "Italia sin brillar pero con Cannavaro y Buffon de titanio. Zidane los sacudió antes de su expulsión. Ganaron en penales.",
+    matches_played: 7, goals_scored: 12, goals_conceded: 2,
+    goals_per_match: 1.71, xg_per_match: null,
+    avg_possession: 51.0, shots_per_match: 13.0,
+    pass_accuracy: 80.0, pressing_intensity: 62.0, defensive_actions: 50,
+  },
+  "2006-runner_up": {
+    team_id: "France", year: 2006, role: "runner_up",
+    coach: "Raymond Domenech", formation: "4-5-1",
+    tournament_notes: "La Francia de Zidane con 34 años jugando al límite. El cabezazo a Materazzi manchó una actuación épica de despedida.",
+    matches_played: 7, goals_scored: 9, goals_conceded: 3,
+    goals_per_match: 1.29, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 12.0,
+    pass_accuracy: 81.0, pressing_intensity: 65.0, defensive_actions: 48,
+  },
+  "2002-champion": {
+    team_id: "Brazil", year: 2002, role: "champion",
+    coach: "Luiz Felipe Scolari", formation: "4-2-3-1",
+    tournament_notes: "Ronaldo Fenómeno resucitó. Scolari armó una máquina ofensiva. Brasil goleó a Alemania 2-0 en la final. Pentacampeonas.",
+    matches_played: 7, goals_scored: 18, goals_conceded: 4,
+    goals_per_match: 2.57, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 15.0,
+    pass_accuracy: 79.0, pressing_intensity: 66.0, defensive_actions: 44,
+  },
+  "2002-runner_up": {
+    team_id: "Germany", year: 2002, role: "runner_up",
+    coach: "Rudi Völler", formation: "4-5-1",
+    tournament_notes: "Alemania llegó a la final sin convencer pero con Kahn como muralla. Miroslav Klose emergió. Cayeron ante la magia de Ronaldo.",
+    matches_played: 7, goals_scored: 14, goals_conceded: 3,
+    goals_per_match: 2.0, xg_per_match: null,
+    avg_possession: 54.0, shots_per_match: 13.0,
+    pass_accuracy: 80.0, pressing_intensity: 64.0, defensive_actions: 46,
+  },
+  "1998-champion": {
+    team_id: "France", year: 1998, role: "champion",
+    coach: "Aimé Jacquet", formation: "4-2-3-1",
+    tournament_notes: "Zidane con dos cabezazos en la final. Francia ganó su primer mundial ante Brasil. Deschamps como capitán.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 2,
+    goals_per_match: 2.14, xg_per_match: null,
+    avg_possession: 54.0, shots_per_match: 14.0,
+    pass_accuracy: 82.0, pressing_intensity: 70.0, defensive_actions: 42,
+  },
+  "1998-runner_up": {
+    team_id: "Brazil", year: 1998, role: "runner_up",
+    coach: "Mário Zagallo", formation: "4-4-2",
+    tournament_notes: "El enigma de Ronaldo antes de la final. Brasil llegó como favorito pero cayó 3-0. Zagallo y la sombra de Ronaldo.",
+    matches_played: 7, goals_scored: 14, goals_conceded: 10,
+    goals_per_match: 2.0, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 13.0,
+    pass_accuracy: 80.0, pressing_intensity: 65.0, defensive_actions: 46,
+  },
+  "1994-champion": {
+    team_id: "Brazil", year: 1994, role: "champion",
+    coach: "Carlos Alberto Parreira", formation: "4-4-2",
+    tournament_notes: "Brasil de Romário y Bebeto. Primero en ganar sin conceder gol en una final. Bicampeones tras 24 años de sequía.",
+    matches_played: 7, goals_scored: 11, goals_conceded: 3,
+    goals_per_match: 1.57, xg_per_match: null,
+    avg_possession: 55.0, shots_per_match: 13.0,
+    pass_accuracy: 81.0, pressing_intensity: 68.0, defensive_actions: 44,
+  },
+  "1994-runner_up": {
+    team_id: "Italy", year: 1994, role: "runner_up",
+    coach: "Arrigo Sacchi", formation: "4-4-2",
+    tournament_notes: "Baggio y el penal que no entró. Sacchi armó una Italia intensa. Roberto Baggio fue figura hasta el último minuto.",
+    matches_played: 7, goals_scored: 8, goals_conceded: 5,
+    goals_per_match: 1.14, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 12.0,
+    pass_accuracy: 79.0, pressing_intensity: 66.0, defensive_actions: 50,
+  },
+  "1990-champion": {
+    team_id: "West Germany", year: 1990, role: "champion",
+    coach: "Franz Beckenbauer", formation: "5-3-2",
+    tournament_notes: "Alemania Occidental de Matthäus. Final ante Argentina con un penal controvertido. El Mundial más defensivo de la historia.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 5,
+    goals_per_match: 2.14, xg_per_match: null,
+    avg_possession: 48.0, shots_per_match: 12.0,
+    pass_accuracy: 75.0, pressing_intensity: 58.0, defensive_actions: 56,
+  },
+  "1990-runner_up": {
+    team_id: "Argentina", year: 1990, role: "runner_up",
+    coach: "Carlos Bilardo", formation: "5-3-2 / 4-4-2",
+    tournament_notes: "Maradona con la rodilla destrozada llevó a Argentina a la final. Caniggia, el gol de su vida en semis ante Italia.",
+    matches_played: 7, goals_scored: 5, goals_conceded: 4,
+    goals_per_match: 0.71, xg_per_match: null,
+    avg_possession: 44.0, shots_per_match: 10.0,
+    pass_accuracy: 72.0, pressing_intensity: 55.0, defensive_actions: 60,
+  },
+  "1986-champion": {
+    team_id: "Argentina", year: 1986, role: "champion",
+    coach: "Carlos Bilardo", formation: "3-5-2",
+    tournament_notes: "El Mundial de Maradona. La Mano de Dios y el gol del siglo en el mismo partido. Argentina campeón con Bilardo y Menotti mezclados.",
+    matches_played: 7, goals_scored: 14, goals_conceded: 5,
+    goals_per_match: 2.0, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 14.0,
+    pass_accuracy: 76.0, pressing_intensity: 65.0, defensive_actions: 50,
+  },
+  "1986-runner_up": {
+    team_id: "West Germany", year: 1986, role: "runner_up",
+    coach: "Franz Beckenbauer", formation: "4-3-3",
+    tournament_notes: "Alemania de Beckenbauer llegó desde atrás. Rummenigge y Völler. Cayeron 3-2 en una final de infarto.",
+    matches_played: 7, goals_scored: 8, goals_conceded: 7,
+    goals_per_match: 1.14, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 11.0,
+    pass_accuracy: 74.0, pressing_intensity: 60.0, defensive_actions: 55,
+  },
+  "1982-champion": {
+    team_id: "Italy", year: 1982, role: "champion",
+    coach: "Enzo Bearzot", formation: "4-4-2",
+    tournament_notes: "Italia de Paolo Rossi, que volvió de una suspensión y fue el goleador del torneo. La remontada ante Brasil en el grupo fue épica.",
+    matches_played: 7, goals_scored: 12, goals_conceded: 6,
+    goals_per_match: 1.71, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 13.0,
+    pass_accuracy: 77.0, pressing_intensity: 62.0, defensive_actions: 48,
+  },
+  "1982-runner_up": {
+    team_id: "West Germany", year: 1982, role: "runner_up",
+    coach: "Jupp Derwall", formation: "3-3-4",
+    tournament_notes: "Rummenigge a medio gas, Breitner y una semifinal increíble vs Francia. La mejor Alemania que no ganó un mundial.",
+    matches_played: 7, goals_scored: 12, goals_conceded: 10,
+    goals_per_match: 1.71, xg_per_match: null,
+    avg_possession: 51.0, shots_per_match: 12.0,
+    pass_accuracy: 76.0, pressing_intensity: 60.0, defensive_actions: 52,
+  },
+  "1978-champion": {
+    team_id: "Argentina", year: 1978, role: "champion",
+    coach: "Cesar Luis Menotti", formation: "4-3-3",
+    tournament_notes: "Argentina de Menotti con Kempes como héroe. El debut mundialista del pueblo argentino como local. Controversia con el Perú.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 4,
+    goals_per_match: 2.14, xg_per_match: null,
+    avg_possession: 53.0, shots_per_match: 14.0,
+    pass_accuracy: 75.0, pressing_intensity: 63.0, defensive_actions: 46,
+  },
+  "1978-runner_up": {
+    team_id: "Netherlands", year: 1978, role: "runner_up",
+    coach: "Ernst Happel", formation: "4-3-3",
+    tournament_notes: "Holanda sin Cruyff igualmente brillante. Rensenbrink, Neeskens, Rep. Cayeron en el alargue por segunda final consecutiva.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 10,
+    goals_per_match: 2.14, xg_per_match: null,
+    avg_possession: 55.0, shots_per_match: 15.0,
+    pass_accuracy: 77.0, pressing_intensity: 65.0, defensive_actions: 48,
+  },
+  "1974-champion": {
+    team_id: "West Germany", year: 1974, role: "champion",
+    coach: "Helmut Schoen", formation: "4-2-4",
+    tournament_notes: "Beckenbauer, Müller, Breitner. Alemania en casa con el fútbol pragmático de Schoen. Vencieron al fútbol total de Cruyff.",
+    matches_played: 7, goals_scored: 13, goals_conceded: 4,
+    goals_per_match: 1.86, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 13.0,
+    pass_accuracy: 76.0, pressing_intensity: 60.0, defensive_actions: 48,
+  },
+  "1974-runner_up": {
+    team_id: "Netherlands", year: 1974, role: "runner_up",
+    coach: "Rinus Michels", formation: "3-4-3 Fútbol Total",
+    tournament_notes: "El fútbol total de Cruyff. Holanda dominó el torneo pero perdió una final que debió ganar. La mejor selección que no fue campeona.",
+    matches_played: 7, goals_scored: 15, goals_conceded: 3,
+    goals_per_match: 2.14, xg_per_match: null,
+    avg_possession: 58.0, shots_per_match: 16.0,
+    pass_accuracy: 79.0, pressing_intensity: 72.0, defensive_actions: 40,
+  },
+  "1970-champion": {
+    team_id: "Brazil", year: 1970, role: "champion",
+    coach: "Mario Zagallo", formation: "4-2-4",
+    tournament_notes: "El Brasil más grande de la historia. Pelé, Jairzinho, Tostão, Rivellino. Fútbol-arte puro. 4-1 a Italia en la final.",
+    matches_played: 6, goals_scored: 19, goals_conceded: 7,
+    goals_per_match: 3.17, xg_per_match: null,
+    avg_possession: 57.0, shots_per_match: 18.0,
+    pass_accuracy: 77.0, pressing_intensity: 62.0, defensive_actions: 38,
+  },
+  "1970-runner_up": {
+    team_id: "Italy", year: 1970, role: "runner_up",
+    coach: "Ferruccio Valcareggi", formation: "W-M / 4-4-2",
+    tournament_notes: "Italia llegó al 90% mediante defensiva. Riva y Rivera. Jugaron la final del siglo ante Alemania, ganando en el alargue, pero cayeron ante Brasil.",
+    matches_played: 6, goals_scored: 10, goals_conceded: 8,
+    goals_per_match: 1.67, xg_per_match: null,
+    avg_possession: 48.0, shots_per_match: 13.0,
+    pass_accuracy: 72.0, pressing_intensity: 55.0, defensive_actions: 52,
+  },
+  "1966-champion": {
+    team_id: "England", year: 1966, role: "champion",
+    coach: "Alf Ramsey", formation: "4-4-2 Wingless",
+    tournament_notes: "Alf Ramsey inventó el 4-4-2 sin extremos. Hurst, el único hat-trick en una final. Local, efectivo, histórico.",
+    matches_played: 6, goals_scored: 11, goals_conceded: 3,
+    goals_per_match: 1.83, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 13.0,
+    pass_accuracy: 73.0, pressing_intensity: 65.0, defensive_actions: 52,
+  },
+  "1966-runner_up": {
+    team_id: "West Germany", year: 1966, role: "runner_up",
+    coach: "Helmut Schoen", formation: "4-2-4",
+    tournament_notes: "Alemania Occidental de Seeler llegó invicta hasta la final. Disputaron el gol fantasma de Hurst. Los primeros en perder una final en casa ajena.",
+    matches_played: 6, goals_scored: 15, goals_conceded: 6,
+    goals_per_match: 2.5, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 15.0,
+    pass_accuracy: 74.0, pressing_intensity: 62.0, defensive_actions: 48,
+  },
+  "1962-champion": {
+    team_id: "Brazil", year: 1962, role: "champion",
+    coach: "Aymore Moreira", formation: "4-3-3",
+    tournament_notes: "Brasil sin Pelé (lesionado en el segundo partido) ganó con Garrincha como líder. Amarildo fue el reemplazante perfecto.",
+    matches_played: 6, goals_scored: 14, goals_conceded: 5,
+    goals_per_match: 2.33, xg_per_match: null,
+    avg_possession: 54.0, shots_per_match: 15.0,
+    pass_accuracy: 74.0, pressing_intensity: 63.0, defensive_actions: 44,
+  },
+  "1962-runner_up": {
+    team_id: "Czechoslovakia", year: 1962, role: "runner_up",
+    coach: "Rudolf Vytlacil", formation: "4-2-4",
+    tournament_notes: "Checoslovaquia sorprendió al mundo llegando a la final. Masopust marcó primero. Cayeron ante la potencia brasileña.",
+    matches_played: 6, goals_scored: 7, goals_conceded: 7,
+    goals_per_match: 1.17, xg_per_match: null,
+    avg_possession: 48.0, shots_per_match: 12.0,
+    pass_accuracy: 70.0, pressing_intensity: 55.0, defensive_actions: 50,
+  },
+  "1958-champion": {
+    team_id: "Brazil", year: 1958, role: "champion",
+    coach: "Vicente Feola", formation: "4-2-4",
+    tournament_notes: "Pelé, 17 años, marcó en la final. Brasil debutó en el Mundial y lo ganó en Europa. Didí y Vavá también brillaron.",
+    matches_played: 6, goals_scored: 16, goals_conceded: 4,
+    goals_per_match: 2.67, xg_per_match: null,
+    avg_possession: 55.0, shots_per_match: 16.0,
+    pass_accuracy: 75.0, pressing_intensity: 65.0, defensive_actions: 42,
+  },
+  "1958-runner_up": {
+    team_id: "Sweden", year: 1958, role: "runner_up",
+    coach: "George Raynor", formation: "3-2-5 / W-M",
+    tournament_notes: "Suecia en casa tuvo una actuación heroica. Liedholm y Simonsson. Perdieron 5-2 ante la magia de Pelé y compañía.",
+    matches_played: 6, goals_scored: 12, goals_conceded: 7,
+    goals_per_match: 2.0, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 14.0,
+    pass_accuracy: 72.0, pressing_intensity: 58.0, defensive_actions: 50,
+  },
+  "1954-champion": {
+    team_id: "Germany", year: 1954, role: "champion",
+    coach: "Sepp Herberger", formation: "W-M / 4-2-4",
+    tournament_notes: "El Milagro de Berna. Alemania Occidental venció a la Hungría imbatible. Fritz Walter en estado de gracia bajo la lluvia.",
+    matches_played: 6, goals_scored: 25, goals_conceded: 14,
+    goals_per_match: 4.17, xg_per_match: null,
+    avg_possession: 49.0, shots_per_match: 18.0,
+    pass_accuracy: 68.0, pressing_intensity: 55.0, defensive_actions: 50,
+  },
+  "1954-runner_up": {
+    team_id: "Hungary", year: 1954, role: "runner_up",
+    coach: "Gusztav Sebes", formation: "3-2-5 / W-M",
+    tournament_notes: "Hungría de Puskás y Kocsis era la mejor del mundo. Ganaron el grupo 8-3 a Alemania pero perdieron la final. La gran tragedia del fútbol.",
+    matches_played: 5, goals_scored: 27, goals_conceded: 10,
+    goals_per_match: 5.4, xg_per_match: null,
+    avg_possession: 57.0, shots_per_match: 22.0,
+    pass_accuracy: 72.0, pressing_intensity: 60.0, defensive_actions: 44,
+  },
+  "1950-champion": {
+    team_id: "Uruguay", year: 1950, role: "champion",
+    coach: "Juan Lopez", formation: "W-M",
+    tournament_notes: "El Maracanazo. Uruguay venció a Brasil en el estadio más grande del mundo ante 200.000 personas. Ghiggia y el gol que calló el Maracaná.",
+    matches_played: 4, goals_scored: 15, goals_conceded: 5,
+    goals_per_match: 3.75, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 14.0,
+    pass_accuracy: 69.0, pressing_intensity: 52.0, defensive_actions: 46,
+  },
+  "1950-runner_up": {
+    team_id: "Brazil", year: 1950, role: "runner_up",
+    coach: "Flavio Costa", formation: "W-M / 4-2-4",
+    tournament_notes: "Brasil era el gran favorito en su propio Mundial. Zizinho y Ademir marcaron 13 goles juntos. La derrota ante Uruguay fue un trauma nacional.",
+    matches_played: 6, goals_scored: 22, goals_conceded: 6,
+    goals_per_match: 3.67, xg_per_match: null,
+    avg_possession: 55.0, shots_per_match: 18.0,
+    pass_accuracy: 71.0, pressing_intensity: 57.0, defensive_actions: 42,
+  },
+  "1938-champion": {
+    team_id: "Italy", year: 1938, role: "champion",
+    coach: "Vittorio Pozzo", formation: "Il Sistema 2-3-2-3",
+    tournament_notes: "Italia bicampeona con Pozzo. Silvio Piola fue el gran goleador. El contexto político marcó el torneo, pero la calidad fue indiscutible.",
+    matches_played: 4, goals_scored: 11, goals_conceded: 5,
+    goals_per_match: 2.75, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 13.0,
+    pass_accuracy: 67.0, pressing_intensity: 50.0, defensive_actions: 48,
+  },
+  "1938-runner_up": {
+    team_id: "Hungary", year: 1938, role: "runner_up",
+    coach: "Karoly Dietz", formation: "W-M",
+    tournament_notes: "Hungría con Sárosi brilló en el torneo. Llegaron a la final goleando pero cayeron ante la organización italiana.",
+    matches_played: 4, goals_scored: 15, goals_conceded: 5,
+    goals_per_match: 3.75, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 14.0,
+    pass_accuracy: 65.0, pressing_intensity: 48.0, defensive_actions: 46,
+  },
+  "1934-champion": {
+    team_id: "Italy", year: 1934, role: "champion",
+    coach: "Vittorio Pozzo", formation: "Il Sistema 2-3-2-3",
+    tournament_notes: "Italia local campeona bajo la presión de Mussolini. Meazza y Schiavio fueron las figuras. Il Sistema táctico como innovación de época.",
+    matches_played: 5, goals_scored: 12, goals_conceded: 3,
+    goals_per_match: 2.4, xg_per_match: null,
+    avg_possession: 53.0, shots_per_match: 13.0,
+    pass_accuracy: 66.0, pressing_intensity: 51.0, defensive_actions: 50,
+  },
+  "1934-runner_up": {
+    team_id: "Czechoslovakia", year: 1934, role: "runner_up",
+    coach: "Karel Petru", formation: "W-M",
+    tournament_notes: "Checoslovaquia de Plánička y Nejedlý. Jugaron una final épica pero cayeron ante Italia en el alargue.",
+    matches_played: 4, goals_scored: 9, goals_conceded: 6,
+    goals_per_match: 2.25, xg_per_match: null,
+    avg_possession: 48.0, shots_per_match: 12.0,
+    pass_accuracy: 64.0, pressing_intensity: 47.0, defensive_actions: 52,
+  },
+  "1930-champion": {
+    team_id: "Uruguay", year: 1930, role: "champion",
+    coach: "Alberto Suppici", formation: "2-3-5",
+    tournament_notes: "Uruguay, el primer campeón del mundo. Nasazzi capitaneó al equipo en casa. Bicampeón olímpico que dominó el primer torneo.",
+    matches_played: 4, goals_scored: 15, goals_conceded: 3,
+    goals_per_match: 3.75, xg_per_match: null,
+    avg_possession: 52.0, shots_per_match: 12.0,
+    pass_accuracy: 64.0, pressing_intensity: 48.0, defensive_actions: 45,
+  },
+  "1930-runner_up": {
+    team_id: "Argentina", year: 1930, role: "runner_up",
+    coach: "Francisco Olazar", formation: "2-3-5",
+    tournament_notes: "Argentina de Stábile, el máximo goleador del torneo. Cayeron en la final ante su vecino en el estadio Centenario.",
+    matches_played: 5, goals_scored: 18, goals_conceded: 9,
+    goals_per_match: 3.6, xg_per_match: null,
+    avg_possession: 50.0, shots_per_match: 13.0,
+    pass_accuracy: 63.0, pressing_intensity: 46.0, defensive_actions: 48,
+  },
+}
+
+// ─── getTeamData: merge DB + fallback ────────────────────────────────────────
+// Prioridad: DB (campos no-null) > STATIC_FALLBACK > null
+// Si DB tiene la fila, sus campos no-null pisan el fallback campo a campo.
+// Si DB no tiene la fila, se usa el fallback completo con id sintético.
+
+function getTeamData(
+  dbTeams: DBHistoricTeam[],
+  year: number,
+  role: "champion" | "runner_up"
+): DBHistoricTeam {
+  const dbRow = dbTeams.find(t => t.year === year && t.role === role)
+  const fallback = STATIC_FALLBACK[`${year}-${role}`]
+
+  if (dbRow) {
+    // DB tiene la fila: mezclar campo a campo (DB gana si no-null)
+    return {
+      ...fallback,
+      ...dbRow,
+      // Campos que DB puede tener null pero fallback tiene valor:
+      coach:               dbRow.coach               ?? fallback?.coach               ?? null,
+      formation:           dbRow.formation           ?? fallback?.formation           ?? null,
+      tournament_notes:    dbRow.tournament_notes    ?? fallback?.tournament_notes    ?? null,
+      matches_played:      dbRow.matches_played      ?? fallback?.matches_played      ?? null,
+      goals_scored:        dbRow.goals_scored        ?? fallback?.goals_scored        ?? null,
+      goals_conceded:      dbRow.goals_conceded      ?? fallback?.goals_conceded      ?? null,
+      goals_per_match:     dbRow.goals_per_match     ?? fallback?.goals_per_match     ?? null,
+      xg_per_match:        dbRow.xg_per_match        ?? fallback?.xg_per_match        ?? null,
+      avg_possession:      dbRow.avg_possession      ?? fallback?.avg_possession      ?? null,
+      shots_per_match:     dbRow.shots_per_match     ?? fallback?.shots_per_match     ?? null,
+      pass_accuracy:       dbRow.pass_accuracy       ?? fallback?.pass_accuracy       ?? null,
+      pressing_intensity:  dbRow.pressing_intensity  ?? fallback?.pressing_intensity  ?? null,
+      defensive_actions:   dbRow.defensive_actions   ?? fallback?.defensive_actions   ?? null,
+    }
+  }
+
+  // DB no tiene la fila: usar fallback con id sintético
+  return {
+    id: `static-${year}-${role}`,
+    ...(fallback ?? {
+      team_id: "", year, role,
+      coach: null, formation: null, tournament_notes: null,
+      matches_played: null, goals_scored: null, goals_conceded: null,
+      goals_per_match: null, xg_per_match: null, avg_possession: null,
+      shots_per_match: null, pass_accuracy: null, pressing_intensity: null,
+      defensive_actions: null,
+    }),
+  }
 }
 
 // ─── Ediciones ────────────────────────────────────────────────────────────────
@@ -231,17 +683,19 @@ function Typewriter({ text, onDone }: { text: string; onDone?: () => void }) {
   return <span>{displayed}<span className="animate-pulse opacity-60">|</span></span>
 }
 
-// ─── TeamPickerModal — modal centrado con campeón y subcampeón ────────────────
+// ─── TeamPickerModal ──────────────────────────────────────────────────────────
 
-function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
+function TeamPickerModal({ edition, dbTeams, excludeKey, onSelect, onClose }: {
   edition: typeof EDITIONS[0]
-  allTeams: DBHistoricTeam[]
+  dbTeams: DBHistoricTeam[]
   excludeKey: string | null
   onSelect: (slot: HistoricSlot) => void
   onClose: () => void
 }) {
-  const champTeam  = allTeams.find(t => t.year === edition.year && t.role === "champion")
-  const runnerTeam = allTeams.find(t => t.year === edition.year && t.role === "runner_up")
+  // Usar getTeamData para que siempre haya datos (DB o fallback)
+  const champTeam  = getTeamData(dbTeams, edition.year, "champion")
+  const runnerTeam = getTeamData(dbTeams, edition.year, "runner_up")
+
   const ex = EXTRAS[edition.year]
   const sc = TOP_SCORERS[String(edition.year)]
 
@@ -282,7 +736,7 @@ function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
             onClick={() => {
               if (champKey === excludeKey) return
               onSelect({
-                team: champTeam ?? ({ year: edition.year, role: "champion", coach: null, formation: null, tournament_notes: null, goals_scored: null, goals_conceded: null, matches_played: null, avg_possession: null, goals_per_match: null, shots_per_match: null, xg_per_match: null, pass_accuracy: null, defensive_actions: null, pressing_intensity: null, id: `static-${edition.year}-c`, team_id: edition.champion } as DBHistoricTeam),
+                team: champTeam,
                 label: `${edition.champion} '${String(edition.year).slice(2)}`,
                 roleLabel: "Campeon",
                 countryName: edition.champion,
@@ -303,9 +757,9 @@ function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
               <p className="text-white font-black text-xl leading-tight">{edition.champion}</p>
             </div>
             <div className="space-y-1">
-              {champTeam?.coach && <p className="text-white/35 text-[11px]">DT: {champTeam.coach}</p>}
+              {champTeam.coach && <p className="text-white/35 text-[11px]">DT: {champTeam.coach}</p>}
               {ex?.champion.captain && <p className="text-white/35 text-[11px]">Capitan: {ex.champion.captain}</p>}
-              {sc?.champion && <p className="text-[#f5b942]/70 text-[11px]">Goleador: {sc.champion}</p>}
+              {sc?.champion && <p className="text-[#f5b942]/70 text-[11px]">GOLEADOR DEL EQUIPO: {sc.champion}</p>}
               {ex?.champion.keyPlayer && <p className="text-[#f5b942]/80 text-[11px] font-semibold">Figura: {ex.champion.keyPlayer}</p>}
             </div>
           </button>
@@ -315,7 +769,7 @@ function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
             onClick={() => {
               if (runnerKey === excludeKey) return
               onSelect({
-                team: runnerTeam ?? ({ year: edition.year, role: "runner_up", coach: null, formation: null, tournament_notes: null, goals_scored: null, goals_conceded: null, matches_played: null, avg_possession: null, goals_per_match: null, shots_per_match: null, xg_per_match: null, pass_accuracy: null, defensive_actions: null, pressing_intensity: null, id: `static-${edition.year}-r`, team_id: edition.runner_up } as DBHistoricTeam),
+                team: runnerTeam,
                 label: `${edition.runner_up} '${String(edition.year).slice(2)}`,
                 roleLabel: "Subcampeon",
                 countryName: edition.runner_up,
@@ -336,9 +790,9 @@ function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
               <p className="text-white font-black text-xl leading-tight">{edition.runner_up}</p>
             </div>
             <div className="space-y-1">
-              {runnerTeam?.coach && <p className="text-white/35 text-[11px]">DT: {runnerTeam.coach}</p>}
+              {runnerTeam.coach && <p className="text-white/35 text-[11px]">DT: {runnerTeam.coach}</p>}
               {ex?.runner_up.captain && <p className="text-white/35 text-[11px]">Capitan: {ex.runner_up.captain}</p>}
-              {sc?.runner_up && <p className="text-white/60 text-[11px]">Goleador: {sc.runner_up}</p>}
+              {sc?.runner_up && <p className="text-white/60 text-[11px]">GOLEADOR DEL EQUIPO: {sc.runner_up}</p>}
               {ex?.runner_up.keyPlayer && <p className="text-white/80 text-[11px] font-semibold">Figura: {ex.runner_up.keyPlayer}</p>}
             </div>
           </button>
@@ -348,10 +802,10 @@ function TeamPickerModal({ edition, allTeams, excludeKey, onSelect, onClose }: {
   )
 }
 
-// ─── WorldCupGrid — grilla de logos + modal de equipo ────────────────────────
+// ─── WorldCupGrid ─────────────────────────────────────────────────────────────
 
-function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose }: {
-  allTeams: DBHistoricTeam[]
+function WorldCupGrid({ dbTeams, onSelectSlot, excludeKey, targetLabel, onClose }: {
+  dbTeams: DBHistoricTeam[]
   onSelectSlot: (slot: HistoricSlot) => void
   excludeKey: string | null
   targetLabel: string
@@ -359,10 +813,6 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
 }) {
   const [selectedEdition, setSelectedEdition] = useState<typeof EDITIONS[0] | null>(null)
   const [failedLogos, setFailedLogos] = useState<Set<number>>(new Set())
-
-  const handleEditionClick = (ed: typeof EDITIONS[0]) => {
-    setSelectedEdition(ed)
-  }
 
   const handleTeamSelect = (slot: HistoricSlot) => {
     onSelectSlot(slot)
@@ -408,13 +858,12 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
                 const logoFailed = failedLogos.has(ed.year)
                 const champKey  = `${ed.year}-champion`
                 const runnerKey = `${ed.year}-runner_up`
-                // Solo deshabilitar si AMBOS slots de esta edicion coinciden con excludeKey
                 const disabled = champKey === excludeKey && runnerKey === excludeKey
 
                 return (
                   <motion.button
                     key={ed.year}
-                    onClick={() => !disabled && handleEditionClick(ed)}
+                    onClick={() => !disabled && setSelectedEdition(ed)}
                     whileHover={!disabled ? { scale: 1.05 } : {}}
                     whileTap={!disabled ? { scale: 0.96 } : {}}
                     disabled={disabled}
@@ -425,7 +874,7 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
                         : "border-white/[0.08] bg-white/[0.03] hover:border-[#f5b942]/40 hover:bg-[#f5b942]/[0.05] cursor-pointer"}
                     `}
                   >
-                    <div className="w-full flex items-center justify-center mb-1" style={{ height: 40 }}>
+                    <div className="w-full flex items-center justify-center mb-1" style={{ height: 48 }}>
                       {!logoFailed ? (
                         <img
                           src={ed.logo}
@@ -434,7 +883,7 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
                           onError={() => setFailedLogos(prev => new Set(prev).add(ed.year))}
                         />
                       ) : (
-                        <span className="text-2xl opacity-30">🏆</span>
+                        <span className="text-3xl opacity-30">🏆</span>
                       )}
                     </div>
                     <span className="text-[11px] font-black tabular-nums text-white/70 leading-none">{ed.year}</span>
@@ -447,12 +896,11 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
         </motion.div>
       </motion.div>
 
-      {/* Modal de equipo — centrado, encima de la grilla */}
       <AnimatePresence>
         {selectedEdition && (
           <TeamPickerModal
             edition={selectedEdition}
-            allTeams={allTeams}
+            dbTeams={dbTeams}
             excludeKey={excludeKey}
             onSelect={handleTeamSelect}
             onClose={() => setSelectedEdition(null)}
@@ -466,7 +914,7 @@ function WorldCupGrid({ allTeams, onSelectSlot, excludeKey, targetLabel, onClose
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function DueloDeEras() {
-  const [allTeams, setAllTeams] = useState<DBHistoricTeam[]>([])
+  const [dbTeams, setDbTeams] = useState<DBHistoricTeam[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
 
   const [slotA, setSlotA] = useState<HistoricSlot | null>(null)
@@ -490,9 +938,10 @@ export default function DueloDeEras() {
           .in("role", ["champion", "runner_up"])
           .order("year", { ascending: false })
         if (error) throw error
-        setAllTeams((data as DBHistoricTeam[]) ?? [])
+        setDbTeams((data as DBHistoricTeam[]) ?? [])
       } catch (err) {
         console.error("Error cargando historic_teams:", err)
+        setDbTeams([]) // fallback total a STATIC_FALLBACK
       } finally {
         setIsLoadingData(false)
       }
@@ -657,7 +1106,7 @@ export default function DueloDeEras() {
                       </div>
                       <div className="space-y-1.5">
                         <div>
-                          <p className="text-[9px] font-mono text-white/20 uppercase tracking-wider">Goleador</p>
+                          <p className="text-[9px] font-mono text-white/20 uppercase tracking-wider">GOLEADOR DEL EQUIPO</p>
                           <p className={`text-[11px] font-semibold mt-0.5 ${isGold ? "text-white/70" : "text-white/65"}`}>
                             {scorer ?? "—"}
                           </p>
@@ -833,7 +1282,7 @@ export default function DueloDeEras() {
       <AnimatePresence>
         {pickerTarget !== null && (
           <WorldCupGrid
-            allTeams={allTeams}
+            dbTeams={dbTeams}
             onSelectSlot={handleSelectSlot}
             excludeKey={pickerTarget === "A" ? excludeForA : excludeForB}
             targetLabel={pickerTarget === "A" ? "Seleccion 1" : "Seleccion 2"}
