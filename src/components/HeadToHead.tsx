@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import type { DBTeam, DBCoachPersonality } from "@/lib/supabase";
 import { useIsMobile } from "@/hooks/useMobilePerf";
+import DueloDeEras from "./DueloDeEras";
 
 
 const LABEL_CLASS = "text-slate-500 font-mono";
